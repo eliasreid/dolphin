@@ -459,7 +459,6 @@ namespace Brawlback {
             return in;
         }
 
-        void fillByteVectorWithBuffer(std::vector<u8>& vec, u8* buf, size_t size);
     }
     namespace Sync {
         std::string getSyncLogFilePath();

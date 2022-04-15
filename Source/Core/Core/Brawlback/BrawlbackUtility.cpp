@@ -64,16 +64,6 @@ namespace Brawlback
             print_byte(byte3);
         }
 
-
-
-
-        void fillByteVectorWithBuffer(std::vector<u8>& vec, u8* buf, size_t size) {
-            u32 idx = 0;
-            while (idx < size) {
-                vec.push_back(buf[idx]);
-                idx++;
-            }
-        }
     }
 
     namespace Sync {

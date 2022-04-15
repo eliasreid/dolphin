@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/HW/EXI/EXI_Device.h"
 #include <string>
-#include <vector>
+#include <span>
 #include <memory>
 #include <deque>
 #include "Core/Brawlback/Savestate.h"
@@ -68,6 +68,8 @@ private:
 
     template <typename T>
     void SendCmdToGame(EXICommand cmd, T* payload);
+
+    void SendCmdToGame(EXICommand cmd, std::span<u8> payload);
 
     void SendCmdToGame(EXICommand cmd);
     // -------------------------------

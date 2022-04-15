@@ -13,6 +13,47 @@
 #include <regex>
 namespace fs = std::filesystem;
 
+std::vector<u8> uint16ToVector(u16 num)
+{
+  u8 byte0 = num >> 8;
+  u8 byte1 = num & 0xFF;
+
+  return std::vector<u8>({byte0, byte1});
+}
+
+std::vector<u8> uint32ToVector(u32 num)
+{
+  u8 byte0 = num >> 24;
+  u8 byte1 = (num & 0xFF0000) >> 16;
+  u8 byte2 = (num & 0xFF00) >> 8;
+  u8 byte3 = num & 0xFF;
+
+  return std::vector<u8>({byte0, byte1, byte2, byte3});
+}
+
+std::vector<u8> int32ToVector(int32_t num)
+{
+  u8 byte0 = num >> 24;
+  u8 byte1 = (num & 0xFF0000) >> 16;
+  u8 byte2 = (num & 0xFF00) >> 8;
+  u8 byte3 = num & 0xFF;
+
+  return std::vector<u8>({byte0, byte1, byte2, byte3});
+}
+
+void appendWordToBuffer(std::vector<u8>* buf, u32 word)
+{
+  auto wordVector = uint32ToVector(word);
+  buf->insert(buf->end(), wordVector.begin(), wordVector.end());
+}
+
+void appendHalfToBuffer(std::vector<u8>* buf, u16 word)
+{
+  auto halfVector = uint16ToVector(word);
+  buf->insert(buf->end(), halfVector.begin(), halfVector.end());
+}
+
+
 // --- Mutexes
 std::mutex read_queue_mutex = std::mutex();
 std::mutex remotePadQueueMutex = std::mutex();
@@ -219,10 +260,20 @@ void CEXIBrawlback::SendCmdToGame(EXICommand cmd, T* payload) {
     this->read_queue.clear();
     this->read_queue.push_back(cmd);
     if (payload) {
+        // here be dragons - casting arbitrary structure to vector of bytes
         std::vector<u8> byteVec = Mem::structToByteVector(payload);
         this->read_queue.insert(this->read_queue.end(), byteVec.begin(), byteVec.end());
     }
 }
+
+void CEXIBrawlback::SendCmdToGame(EXICommand cmd, std::span<u8> payload)
+{
+  // std::lock_guard<std::mutex> lock (read_queue_mutex); // crash here wtf?
+  this->read_queue.clear();
+  this->read_queue.push_back(cmd);
+  this->read_queue.insert(this->read_queue.end(), payload.begin(), payload.end());
+}
+
 
 void CEXIBrawlback::SendCmdToGame(EXICommand cmd) {
     //std::lock_guard<std::mutex> lock (read_queue_mutex);
@@ -1129,7 +1180,11 @@ void CEXIBrawlback::handleGetNumberReplayFiles()
       this->replays.push_back(j.dump());
     }
   }
-  int numReplayFiles = this->replays.size();
+  u32 numReplayFiles = u32(this->replays.size());
+  //TODO: how do we want to send number of replays?
+  //What is the maximum number of replays we can show? Probably depends on what brawl menu can handle
+  //For now send
+  uint32ToVector(numReplayFiles);
   SendCmdToGame(CMD_REPLAY_SEND_NUMBER_REPLAY_FILES, &numReplayFiles);
 }
 void CEXIBrawlback::handleGetReplayFilesSize()
