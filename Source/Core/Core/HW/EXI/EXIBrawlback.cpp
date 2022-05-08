@@ -257,6 +257,7 @@ void CEXIBrawlback::handleLocalPadData(u8* data)
         this->hasGameStarted = true;
     }
 
+    // this just for debugging purposes. Tracks and displays the number of timesyncs done every 60 frames
     static int numTimesyncs = 0;
     if (frame % 60 == 0) {
         OSD::AddTypedMessage(OSD::MessageType::NetPlayBuffer, "Timesyncs: " + std::to_string(numTimesyncs) + "\n", OSD::Duration::NORMAL, OSD::Color::CYAN);
@@ -296,8 +297,8 @@ void CEXIBrawlback::handleLocalPadData(u8* data)
         }
         #endif
 
-        if (!foundData.second && frame > FRAME_DELAY) { // if we didn't find remote inputs AND didn't find/use predicted inputs for some reason
-            INFO_LOG(BRAWLBACK, "Couldn't find any remote inputs - Sending time sync command\n");
+        if (!foundData.second && frame > FRAME_DELAY) { // if we didn't find remote inputs AND didn't find/use predicted inputs
+            ERROR_LOG(BRAWLBACK, "Couldn't find any remote inputs - Sending time sync command\n");
             this->SendCmdToGame(EXICommand::CMD_TIMESYNC);
             numTimesyncs += 1;
         }
@@ -324,7 +325,7 @@ void CEXIBrawlback::storeLocalInputs(Match::PlayerFrameData* localPlayerFramedat
     //INFO_LOG(BRAWLBACK, "Frame %u PlayerIdx: %u numPlayers %u\n", localPlayerFramedata->frame, localPlayerFramedata->playerIdx, this->numPlayers);
 
     // make sure we're storing inputs sequentially
-    if (!this->localPlayerFrameData.empty() && localPlayerFramedata->frame == this->localPlayerFrameData.back()->frame + 1) {
+    if (!this->localPlayerFrameData.empty() && pFD->frame != this->localPlayerFrameData.back()->frame + 1) {
         WARN_LOG(BRAWLBACK, "Didn't push local framedata for frame %u\n", pFD->frame);
     }
     else {
@@ -557,7 +558,7 @@ void CEXIBrawlback::SetupRollback(u32 currentFrame, u32 confirmFrame) {
             if (RANGE(i, this->rollbackInfo.beginFrame, confirmFrame) || pIdx == this->localPlayerIdx) {
                 Match::PlayerFrameData* pastInputs = findInPlayerFrameDataQueue(inputQueue, i);
                 if (pastInputs) {
-                    INFO_LOG(BRAWLBACK, "Inserting inputs idx %u pidx %i frame %u\n", frameDiff, pIdx, pastInputs->frame);
+                    //INFO_LOG(BRAWLBACK, "Inserting inputs idx %u pidx %i frame %u\n", frameDiff, pIdx, pastInputs->frame);
                     memcpy(inputToPopulate, pastInputs, sizeof(Match::PlayerFrameData));
                 }
                 else {
@@ -570,7 +571,7 @@ void CEXIBrawlback::SetupRollback(u32 currentFrame, u32 confirmFrame) {
                 Match::PlayerFrameData predictedInputs = this->rollbackInfo.predictedInputs.playerFrameDatas[pIdx];
                 predictedInputs.frame = i; // rekey predicted inputs - pretending these are remote inputs
                 predictedInputs.playerIdx = pIdx;
-                INFO_LOG(BRAWLBACK, "Inserting predicted inputs idx %u pidx %i frame %u\n", frameDiff, predictedInputs.playerIdx, predictedInputs.frame);
+                //INFO_LOG(BRAWLBACK, "Inserting predicted inputs idx %u pidx %i frame %u\n", frameDiff, predictedInputs.playerIdx, predictedInputs.frame);
                 *inputToPopulate = predictedInputs;
             }
 
