@@ -449,7 +449,7 @@ std::pair<bool, bool> CEXIBrawlback::getInputsForGame(Match::FrameData& framedat
                 }
 
                 if (justRecvdInputs && latestConfirmedFrame >= GAME_FULL_START_FRAME) {
-                    INFO_LOG(BRAWLBACK, "Found past remote inputs for rollback. Frame %i rbBeginFrame: %u", frame, rollbackInfo.beginFrame);
+                    INFO_LOG(BRAWLBACK, "Found past remote inputs for rollback. justRecvdInputs->frame = %i rbBeginFrame = %u", justRecvdInputs->frame, rollbackInfo.beginFrame);
                     this->SetupRollback(frame, justRecvdInputs->frame);
                 }
                 else {
@@ -457,6 +457,8 @@ std::pair<bool, bool> CEXIBrawlback::getInputsForGame(Match::FrameData& framedat
                         std::optional<Match::PlayerFrameData> predictedInputs = this->HandleInputPrediction(frame, playerIdx);
                         if (predictedInputs) {
                             foundData.second = true;
+                            // rekey predicted inputs for this frame
+                            predictedInputs.value().frame = frame;
                             framedataToSendToGame.playerFrameDatas[playerIdx] = predictedInputs.value();
                         }
                     }
@@ -464,6 +466,8 @@ std::pair<bool, bool> CEXIBrawlback::getInputsForGame(Match::FrameData& framedat
                         Match::PlayerFrameData predictedInputs = this->rollbackInfo.predictedInputs.playerFrameDatas[playerIdx];
                         if (frame - predictedInputs.frame < MAX_ROLLBACK_FRAMES) {
                             INFO_LOG(BRAWLBACK, "Using predicted inputs from frame %u\n", predictedInputs.frame);
+                            // rekey predicted inputs for this frame
+                            predictedInputs.frame = frame;
                             framedataToSendToGame.playerFrameDatas[playerIdx] = predictedInputs;
                             foundData.second = true;
                         }
@@ -493,6 +497,7 @@ std::pair<bool, bool> CEXIBrawlback::getInputsForGame(Match::FrameData& framedat
 
 
 std::optional<Match::PlayerFrameData> CEXIBrawlback::HandleInputPrediction(u32 frame, u8 playerIdx) {
+    // keep in mind the inputs returned here will be for a previous frame
     std::optional<Match::PlayerFrameData> ret = std::nullopt;
 
     INFO_LOG(BRAWLBACK, "Trying to find frame for predicted inputs...\n");
@@ -506,6 +511,8 @@ std::optional<Match::PlayerFrameData> CEXIBrawlback::HandleInputPrediction(u32 f
 
             ret = std::make_optional(*predictedInputs);
 
+            // when we begin predicting inputs, we find the most recent confirmed frame
+            // so we should be rolling back to this frame + 1 since that's the most recent *non* confirmed frame
             s32 rollbackBeginFrame = frameIter + 1;
             // set rollback info
 
@@ -537,7 +544,7 @@ std::optional<Match::PlayerFrameData> CEXIBrawlback::HandleInputPrediction(u32 f
 // prepares RollbackInfo struct with relevant rollback info
 // currentFrame is the current frame we're on, and confirmFrame is the latest frame of inputs we just received
 void CEXIBrawlback::SetupRollback(u32 currentFrame, u32 confirmFrame) {
-    rollbackInfo.beginFrame = latestConfirmedFrame+1; // frame to rollback to
+    rollbackInfo.beginFrame = this->latestConfirmedFrame+1; // frame to rollback to
     this->latestConfirmedFrame = (int)confirmFrame; // frame of latest confirmed remote inputs
     this->rollbackInfo.endFrame = currentFrame; // current frame we need to resim up to
 
