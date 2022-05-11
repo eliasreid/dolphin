@@ -464,7 +464,7 @@ std::pair<bool, bool> CEXIBrawlback::getInputsForGame(Match::FrameData& framedat
                     }
                     else {
                         Match::PlayerFrameData predictedInputs = this->rollbackInfo.predictedInputs.playerFrameDatas[playerIdx];
-                        if (frame - predictedInputs.frame < MAX_ROLLBACK_FRAMES) {
+                        if (frame - predictedInputs.frame <= MAX_ROLLBACK_FRAMES) {
                             INFO_LOG(BRAWLBACK, "Using predicted inputs from frame %u\n", predictedInputs.frame);
                             // rekey predicted inputs for this frame
                             predictedInputs.frame = frame;
