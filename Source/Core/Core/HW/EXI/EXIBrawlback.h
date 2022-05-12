@@ -1,154 +1,109 @@
 #pragma once
-#include "Core/HW/EXI/EXI_Device.h"
+#include <deque>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <deque>
-#include "Core/Brawlback/Savestate.h"
 #include "Core/Brawlback/BrawlbackUtility.h"
-#include "Core/Brawlback/Netplay/Netplay.h"
 #include "Core/Brawlback/Netplay/Matchmaking.h"
+#include "Core/Brawlback/Netplay/Netplay.h"
+#include "Core/Brawlback/Savestate.h"
 #include "Core/Brawlback/TimeSync.h"
+#include "Core/HW/EXI/EXI_Device.h"
 
 using namespace Brawlback;
 
 class CEXIBrawlback : public ExpansionInterface::IEXIDevice
 {
-
 public:
-    CEXIBrawlback();
-    ~CEXIBrawlback() override;
+  CEXIBrawlback();
+  ~CEXIBrawlback() override;
 
-    
-    void DMAWrite(u32 address, u32 size) override;
-    void DMARead(u32 address, u32 size) override;
+  void DMAWrite(u32 address, u32 size) override;
+  void DMARead(u32 address, u32 size) override;
 
-    bool IsPresent() const;
+  bool IsPresent() const;
 
 private:
+  // byte vector for sending into to the game
+  std::vector<u8> read_queue = {};
 
-    // byte vector for sending into to the game
-    std::vector<u8> read_queue = {};
+  // --- DMA handlers
+  void handleCaptureSavestate(u8* data);
+  void handleLoadSavestate(u8* data);
+  void handleLocalPadData(u8* data);
+  void handleFindMatch(u8* payload);
+  void handleStartMatch(u8* payload);
 
-    // DMA handlers
-    void handleCaptureSavestate(u8* data);
-    void handleLoadSavestate(u8* data);
-    void handleLocalPadData(u8* data);
-    void handleFindMatch(u8* payload);
-    void handleStartMatch(u8* payload);
+  template <typename T>
+  void SendCmdToGame(EXICommand cmd, T* payload);
 
-    // REPLAYS
-    json curReplay;
-    std::vector<u8> curReplaySerialized;
-    std::vector<const char*> replays;
-    std::vector<const char*> replayNames;
-    int curIndex;
-    int curFrame;
-    void handleNumPlayers(int* payload);
-    void handleRandom(u32* payload);
-    void handleStage(u8* payload);
-    void handleIndex(int* payload);
-    void handleStartPosition(float* payload);
-    void handleStartFighter(int* payload);
-    void handleItemIds(itemIdName* payload, int size);
-    void handleItemVarients(u16* payload, int size);
-    void handleGame(u32* payload);
-    void handleInputs(u8* payload);
-    void handlePos(float* payload);
-    void handleStick(float* payload);
-    void handleActionState(u32* payload);
-    void handleStockCount(int* payload);
-    void handleFighter(double* payload);
-    void handleEndGame();
-    void handleGetNumberReplayFiles();
-    void handleGetReplayFilesSize();
-    void handleGetReplayFilesNamesSize();
-    void handleGetReplayFilesNames();
-    void handleGetReplayFiles();
+  void SendCmdToGame(EXICommand cmd);
+  // -------------------------------
 
-    template <typename T>
-    void SendCmdToGame(EXICommand cmd, T* payload);
+  // --- Net
+  void NetplayThreadFunc();
+  void ProcessNetReceive(ENetEvent* event);
+  void ProcessRemoteFrameData(PlayerFrameData* framedata, u8 numFramedatas);
+  void ProcessIndividualRemoteFrameData(PlayerFrameData* framedata);
+  void ProcessGameSettings(GameSettings* opponentGameSettings);
+  void ProcessFrameAck(FrameAck* frameAck);
+  u32 GetLatestRemoteFrame();
+  ENetHost* server = nullptr;
+  std::thread netplay_thread;
+  std::unique_ptr<BrawlbackNetplay> netplay;
 
-    void SendCmdToGame(EXICommand cmd);
-    // -------------------------------
+  bool isConnected = false;
+  // -------------------------------
 
+  // --- Matchmaking
+  void connectToOpponent();
+  void MatchmakingThreadFunc();
+  Brawlback::UserInfo getUserInfo();
+  Matchmaking::MatchSearchSettings lastSearch;
+  std::unique_ptr<Matchmaking> matchmaking;
+  std::thread matchmaking_thread;
+  // -------------------------------
 
-    // --- Net
-    void NetplayThreadFunc();
-    void ProcessNetReceive(ENetEvent* event);
-    void ProcessRemoteFrameData(Match::PlayerFrameDataImpl* framedata, u8 numFramedatas);
-    void ProcessIndividualRemoteFrameData(Match::PlayerFrameDataImpl* framedata);
-    void ProcessGameSettings(Match::GameSettingsImpl* opponentGameSettings);
-    void ProcessFrameAck(FrameAck* frameAck);
-    u32 GetLatestRemoteFrame();
-    ENetHost* server = nullptr;
-    std::thread netplay_thread;
-    std::unique_ptr<BrawlbackNetplay> netplay;
+  // --- Game info
+  bool isHost = true;
+  int localPlayerIdx = -1;
+  u8 numPlayers = 0;
+  bool hasGameStarted = false;
+  std::unique_ptr<GameSettings> gameSettings;
+  // -------------------------------
 
-    bool isConnected = false;
-    // -------------------------------
+  // --- Time sync
+  std::unique_ptr<TimeSync> timeSync;
+  // -------------------------------
 
+  // --- Rollback
+  RollbackInfo rollbackInfo = RollbackInfo();
+  void SetupRollback(u32 currentFrame, u32 confirmFrame);
+  std::optional<PlayerFrameData> HandleInputPrediction(u32 frame, u8 playerIdx);
+  int latestConfirmedFrame = 0;
+  // -------------------------------
 
+  // --- Savestates
+  std::deque<std::unique_ptr<BrawlbackSavestate>> savestates = {};
+  std::unordered_map<u32, BrawlbackSavestate*> savestatesMap = {};
 
-    // --- Matchmaking
-    void connectToOpponent();
-    void MatchmakingThreadFunc();
-    Brawlback::UserInfo getUserInfo();
-    Matchmaking::MatchSearchSettings lastSearch;
-    std::unique_ptr<Matchmaking> matchmaking;
-    std::thread matchmaking_thread;
-    // -------------------------------
+  std::map<s32, std::unique_ptr<BrawlbackSavestate>> activeSavestates = {};
+  std::deque<std::unique_ptr<BrawlbackSavestate>> availableSavestates = {};
+  // -------------------------------
 
+  // --- Framedata (player inputs)
+  void handleSendInputs(u32 frame);
+  std::pair<bool, bool> getInputsForGame(FrameData& framedataToSendToGame, u32 frame);
+  void storeLocalInputs(PlayerFrameData* localPlayerFramedata);
 
+  // local player input history. Always holds FRAMEDATA_MAX_QUEUE_SIZE of past inputs
+  PlayerFrameDataQueue localPlayerFrameData = {};
 
+  // remote player input history (indexes are player indexes). Always holds FRAMEDATA_MAX_QUEUE_SIZE
+  // of past inputs
+  std::array<PlayerFrameDataQueue, MAX_NUM_PLAYERS> remotePlayerFrameData = {};
+  // -------------------------------
 
-    // --- Game info
-    bool isHost = true;
-    int localPlayerIdx = -1;
-    u8 numPlayers = 0;
-    bool hasGameStarted = false;
-    std::unique_ptr<Match::GameSettingsImpl> gameSettings;
-    // -------------------------------
-
-
-    // --- Time sync
-    std::unique_ptr<TimeSync> timeSync;
-    // -------------------------------
-
-    
-    // --- Rollback
-    Match::RollbackInfoImpl rollbackInfo = Match::RollbackInfoImpl();
-    void SetupRollback(u32 currentFrame, u32 confirmFrame);
-    std::optional<Match::PlayerFrameDataImpl> HandleInputPrediction(u32 frame, u8 playerIdx);
-    int latestConfirmedFrame = 0;
-    // -------------------------------
-
-
-
-    // --- Savestates
-    std::deque<std::unique_ptr<BrawlbackSavestate>> savestates = {};
-    std::unordered_map<u32, BrawlbackSavestate*> savestatesMap = {};
-
-    std::map<s32, std::unique_ptr<BrawlbackSavestate>> activeSavestates = {};
-	std::deque<std::unique_ptr<BrawlbackSavestate>> availableSavestates = {};
-    // -------------------------------
-    
-
-    // --- Framedata (player inputs)
-    void handleSendInputs(u32 frame);
-    std::pair<bool, bool> getInputsForGame(Match::FrameDataImpl& framedataToSendToGame, u32 frame);
-    void storeLocalInputs(Match::PlayerFrameDataImpl* localPlayerFramedata);
-
-    // local player input history. Always holds FRAMEDATA_MAX_QUEUE_SIZE of past inputs
-    PlayerFrameDataQueue localPlayerFrameData = {};
-
-    // remote player input history (indexes are player indexes). Always holds FRAMEDATA_MAX_QUEUE_SIZE of past inputs
-    std::array<PlayerFrameDataQueue, MAX_NUM_PLAYERS> remotePlayerFrameData = {};
-    // -------------------------------
-
-
-
-    protected:
-    void TransferByte(u8& byte) override;
-
+protected:
+  void TransferByte(u8& byte) override;
 };

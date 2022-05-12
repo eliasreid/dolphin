@@ -81,19 +81,3 @@ struct gfPadGamecube
   }
 };
 #pragma pack(pop)
-
-
-struct BrawlbackPadImpl {
-    BrawlbackPad _brawlbackPad;
-
-    BrawlbackPadImpl()
-    {
-        _brawlbackPad.buttons = 0;
-        _brawlbackPad.stickX = 0;
-        _brawlbackPad.stickY = 0;
-        _brawlbackPad.cStickX = 0;
-        _brawlbackPad.cStickY = 0;
-        _brawlbackPad.LTrigger = 0;
-        _brawlbackPad.RTrigger = 0;
-    }
-};

@@ -13,7 +13,7 @@
 #include "SlippiUtility.h"
 #include "Brawltypes.h"
 #include "Savestate.h"
-
+#include "brawlback-exi-structures/ExiStructures.h"
 
 
 #define FRAME_DELAY 2
@@ -327,82 +327,7 @@ namespace Brawlback {
     };
     namespace Match
     {   
-        struct PlayerFrameDataImpl {
-            PlayerFrameData _playerFrameData;
-
-            // do these impact the size of the struct?
-            // wouldn't the vtable ptr screw with it being interpreted on gameside???
-            // (since the gameside structs don't have these ctors)
-            PlayerFrameDataImpl() {
-                _playerFrameData.frame = 0;
-                _playerFrameData.playerIdx = 0;
-                _playerFrameData.pad = BrawlbackPadImpl()._brawlbackPad;
-            }
-            PlayerFrameDataImpl(u32 _frame, u8 _playerIdx)
-            {
-                _playerFrameData.frame = _frame;
-                _playerFrameData.playerIdx = _playerIdx;
-                _playerFrameData.pad = BrawlbackPadImpl()._brawlbackPad;
-            }
-        };
-
-        struct FrameDataImpl {
-            FrameData _frameData;
-
-            FrameDataImpl()
-            {
-                _frameData.randomSeed = 0;
-                for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
-                    _frameData.playerFrameDatas[i] = PlayerFrameDataImpl()._playerFrameData;
-                }
-            }
-            FrameDataImpl(u32 frame)
-            {
-                _frameData.randomSeed = 0;
-                for (u8 i = 0; i < MAX_NUM_PLAYERS; i++) {
-                    _frameData.playerFrameDatas[i] = PlayerFrameDataImpl(frame, i)._playerFrameData;
-                }
-            }
-        };
-        struct PlayerSettingsImpl
-        {
-            PlayerSettings _playerSettings;
-        };
-
-        struct GameSettingsImpl
-        {
-            GameSettings _gameSettings;
-        };
-        struct Game {
-            u32 version;
-            GameSettingsImpl gameSettings;
-            u32 currentFrame;
-            std::unordered_map<int32_t, FrameDataImpl*> framesByIndex;
-            std::vector<std::unique_ptr<FrameDataImpl>> frames;
-        };
-
-        struct RollbackInfoImpl {
-            RollbackInfo _rollbackInfo;
-            //std::vector<SlippiUtility::Savestate::PreserveBlockImpl> preserveBlocks;
-
-            RollbackInfoImpl() {
-                Reset();
-            }
-            void Reset() {
-                _rollbackInfo.isUsingPredictedInputs = false;
-                _rollbackInfo.beginFrame = 0;
-                _rollbackInfo.endFrame = 0;
-                _rollbackInfo.predictedInputs = FrameDataImpl()._frameData;
-                _rollbackInfo.pastFrameDataPopulated = false;
-                memset(_rollbackInfo.pastFrameDatas, 0, sizeof(FrameData) * MAX_ROLLBACK_FRAMES);
-                _rollbackInfo.hasPreserveBlocks = false;
-                //preserveBlocks = {};
-            }
-
-        };
-
         bool isPlayerFrameDataEqual(const PlayerFrameData& p1, const PlayerFrameData& p2);
-        
     }
 
 
@@ -410,7 +335,7 @@ namespace Brawlback {
 
     // checks if the specified `button` is held down based on the buttonBits bitfield
     bool isButtonPressed(u16 buttonBits, PADButtonBits button);
-
+    void ResetRollbackInfo(RollbackInfo& rollbackInfo);
     namespace Mem {
         void print_byte(uint8_t byte);
         void print_half(u16 half);
@@ -429,13 +354,13 @@ namespace Brawlback {
         std::string str_byte(uint8_t byte);
         std::string str_half(u16 half);
         void SyncLog(const std::string& msg);
+        std::string stringifyFramedata(const PlayerFrameData& pfd);
         std::string stringifyFramedata(const FrameData& fd, int numPlayers);
-        std::string stringifyFramedata(const Match::PlayerFrameDataImpl& pfd);
     }
     
-    typedef std::deque<std::unique_ptr<Match::PlayerFrameDataImpl>> PlayerFrameDataQueue;
+    typedef std::deque<std::unique_ptr<PlayerFrameData>> PlayerFrameDataQueue;
 
-    Match::PlayerFrameDataImpl* findInPlayerFrameDataQueue(const PlayerFrameDataQueue& queue,
+    PlayerFrameData* findInPlayerFrameDataQueue(const PlayerFrameDataQueue& queue,
                                                            u32 frame);
 
     int SavestateChecksum(std::vector<ssBackupLoc>* backupLocs);
