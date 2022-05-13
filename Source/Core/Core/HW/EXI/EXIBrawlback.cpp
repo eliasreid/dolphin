@@ -848,13 +848,15 @@ void CEXIBrawlback::ProcessGameSettings(GameSettings* opponentGameSettings)
   // assumes 1v1
   int remotePlayerIdx = this->isHost ? 1 : 0;
 
-  GameSettings* mergedGameSettings = this->gameSettings.get();
+  //doing this so functionally equivalen to what White had before
+  // Probably should just use gameSettings directly...
+  GameSettings& mergedGameSettings = gameSettings;
   INFO_LOG(BRAWLBACK, "ProcessGameSettings for player %u\n", this->localPlayerIdx);
   INFO_LOG(BRAWLBACK, "Remote player idx: %i\n", remotePlayerIdx);
 
-  mergedGameSettings->localPlayerIdx = this->localPlayerIdx;
+  mergedGameSettings.localPlayerIdx = this->localPlayerIdx;
 
-  this->numPlayers = mergedGameSettings->numPlayers;
+  this->numPlayers = mergedGameSettings.numPlayers;
   INFO_LOG(BRAWLBACK, "Num players from emu: %u\n", (unsigned int)this->numPlayers);
 
   // this is kinda broken kinda unstable and weird.
@@ -862,48 +864,48 @@ void CEXIBrawlback::ProcessGameSettings(GameSettings* opponentGameSettings)
   if (this->numPlayers == 0)
   {
     this->numPlayers = 2;
-    mergedGameSettings->numPlayers = 2;
+    mergedGameSettings.numPlayers = 2;
   }
 
   if (!this->isHost)
   {  // is not host
-    mergedGameSettings->randomSeed = opponentGameSettings->randomSeed;
+    mergedGameSettings.randomSeed = opponentGameSettings->randomSeed;
 
     // get a random stage on the non-host side.
-    mergedGameSettings->stageID = matchmaking->GetRandomStage();
+    mergedGameSettings.stageID = matchmaking->GetRandomStage();
 
     // if not host, your character will be p2, if host, your char will be p1
 
     // copy char into both slots
-    mergedGameSettings->playerSettings[1].charID = mergedGameSettings->playerSettings[0].charID;
+    mergedGameSettings.playerSettings[1].charID = mergedGameSettings.playerSettings[0].charID;
     // copy char from opponent p1 into our p1
-    mergedGameSettings->playerSettings[0].charID = opponentGameSettings->playerSettings[0].charID;
+    mergedGameSettings.playerSettings[0].charID = opponentGameSettings->playerSettings[0].charID;
   }
   else
   {  // is host
     // copy char from opponent's p2 into our p2
-    mergedGameSettings->playerSettings[1].charID = opponentGameSettings->playerSettings[1].charID;
+    mergedGameSettings.playerSettings[1].charID = opponentGameSettings->playerSettings[1].charID;
 
     // set our stage based on the one the other client generated
-    mergedGameSettings->stageID = opponentGameSettings->stageID;
+    mergedGameSettings.stageID = opponentGameSettings->stageID;
   }
-  mergedGameSettings->playerSettings[localPlayerIdx].playerType =
+  mergedGameSettings.playerSettings[localPlayerIdx].playerType =
       PlayerType::PLAYERTYPE_LOCAL;
-  mergedGameSettings->playerSettings[remotePlayerIdx].playerType =
+  mergedGameSettings.playerSettings[remotePlayerIdx].playerType =
       PlayerType::PLAYERTYPE_REMOTE;
 
   // if we're not host, we just connected to host and received their game settings,
   // now we need to send our game settings back to them so they can start their game too
   if (!this->isHost)
   {
-    this->netplay->BroadcastGameSettings(this->server, mergedGameSettings);
+    this->netplay->BroadcastGameSettings(this->server, &mergedGameSettings);
   }
 
-  std::vector<u8> mergedGameSettingsByteVec = Mem::structToByteVector(mergedGameSettings);
   std::lock_guard<std::mutex> lock(read_queue_mutex);
   this->read_queue.push_back(EXICommand::CMD_SETUP_PLAYERS);
-  this->read_queue.insert(this->read_queue.end(), mergedGameSettingsByteVec.begin(),
-                          mergedGameSettingsByteVec.end());
+  auto gameSettingsPtr = reinterpret_cast<u8*>(&mergedGameSettings);
+  this->read_queue.insert(this->read_queue.end(), gameSettingsPtr,
+                          gameSettingsPtr + sizeof(GameSettings));
 }
 
 // called from netplay thread
@@ -980,7 +982,7 @@ void CEXIBrawlback::NetplayThreadFunc()
 
   if (this->isHost)
   {  // if we're host, send our game settings to clients right after connecting
-    this->netplay->BroadcastGameSettings(this->server, this->gameSettings.get());
+    this->netplay->BroadcastGameSettings(this->server, &this->gameSettings);
   }
 
   INFO_LOG(BRAWLBACK, "Starting main net data loop");
@@ -1181,18 +1183,19 @@ void CEXIBrawlback::handleFindMatch(u8* payload)
 void CEXIBrawlback::handleStartMatch(u8* payload)
 {
   // if (!payload) return;
-  GameSettings* settings = (GameSettings*)payload;
-  this->gameSettings = std::make_unique<GameSettings>(*settings);
+  std::memcpy(&gameSettings, payload, sizeof(GameSettings));
 }
 
 void CEXIBrawlback::handleStartReplaysStruct(u8* payload)
 {
-  StartReplay* startReplay = (StartReplay*)payload;
+  StartReplay startReplay;
+  std::memcpy(&startReplay, payload, sizeof(StartReplay));
+
   auto start = this->replayJson["start"];
-  for (int i = 0; i < startReplay->numPlayers; i++)
+  for (int i = 0; i < startReplay.numPlayers; i++)
   {
     auto player = start["players"][i];
-    auto replayPlayer = startReplay->players[i];
+    auto replayPlayer = startReplay.players[i];
     player["ftKind"] = replayPlayer.fighterKind;
     auto position = player["startPlayerPos"];
     auto replayPosition = replayPlayer.startPlayer;
@@ -1201,31 +1204,34 @@ void CEXIBrawlback::handleStartReplaysStruct(u8* payload)
     position["y"] = replayPosition.yPos;
     position["z"] = replayPosition.zPos;
   }
-  start["stage"] = startReplay->stage;
-  start["randomSeed"] = startReplay->randomSeed;
-  start["otherRandomSeed"] = startReplay->otherRandomSeed;
+  start["stage"] = startReplay.stage;
+  start["randomSeed"] = startReplay.randomSeed;
+  start["otherRandomSeed"] = startReplay.otherRandomSeed;
 }
 
 void CEXIBrawlback::handleReplaysStruct(u8* payload)
 {
-  Replay* replay = (Replay*)payload;
-  auto frameName = "frame_" + replay->frameCounter;
-  this->replayJson[frameName]["persistentFrameCounter"] = replay->persistentFrameCounter;
-  for (int i = 0; i < replay->numItems; i++)
+  Replay replay;
+  std::memcpy(&replay, payload, sizeof(Replay));
+
+  //Replay* replay = (Replay*)payload;
+  auto frameName = "frame_" + replay.frameCounter;
+  this->replayJson[frameName]["persistentFrameCounter"] = replay.persistentFrameCounter;
+  for (int i = 0; i < replay.numItems; i++)
   {
     auto item = this->replayJson[frameName]["items"][i];
-    auto replayItem = replay->items[i];
+    auto replayItem = replay.items[i];
 
     item["itemId"] = replayItem.itemId;
     item["itemVariant"] = replayItem.itemVariant;
   }
-  for (int i = 0; i < replay->numPlayers; i++)
+  for (int i = 0; i < replay.numPlayers; i++)
   {
     auto player = this->replayJson[frameName]["players"][i];
     auto inputs = player["inputs"];
     auto position = player["position"];
 
-    auto replayPlayer = replay->players[i];
+    auto replayPlayer = replay.players[i];
     auto replayInputs = replayPlayer.inputs;
     auto replayPosition = replayPlayer.pos;
 
