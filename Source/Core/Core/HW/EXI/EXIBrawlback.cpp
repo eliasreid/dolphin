@@ -280,12 +280,13 @@ PlayerFrameData CreateDummyPlayerFrameData(u32 frame, u8 playerIdx)
 // this is called every frame at the beginning of the frame
 void CEXIBrawlback::handleLocalPadData(u8* data)
 {
-  PlayerFrameData* playerFramedata = (PlayerFrameData*)data;
+  PlayerFrameData playerFramedata;
+  std::memcpy(&playerFramedata, data, sizeof(PlayerFrameData));
   int idx = 0;
   // first 4 bytes are current game frame
   u32 frame = SlippiUtility::Mem::readWord(data, idx, 999, 0);  // properly switched endianness
-  u8 playerIdx = playerFramedata->playerIdx;
-  playerFramedata->frame = frame;  // properly switched endianness
+  u8 playerIdx = playerFramedata.playerIdx;
+  playerFramedata.frame = frame;  // properly switched endianness
 
   if (frame == GAME_START_FRAME)
   {
@@ -328,7 +329,7 @@ void CEXIBrawlback::handleLocalPadData(u8* data)
   else
   {
     // store these local inputs (with frame delay)
-    this->storeLocalInputs(playerFramedata);
+    this->storeLocalInputs(&playerFramedata);
     // broadcasts local inputs
     this->handleSendInputs(frame);
 
