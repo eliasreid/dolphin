@@ -1215,8 +1215,7 @@ void CEXIBrawlback::handleReplaysStruct(u8* payload)
   Replay replay;
   std::memcpy(&replay, payload, sizeof(Replay));
 
-  //Replay* replay = (Replay*)payload;
-  auto frameName = "frame_" + replay.frameCounter;
+  const auto frameName = fmt::format("frame_{}", replay.frameCounter);
   this->replayJson[frameName]["persistentFrameCounter"] = replay.persistentFrameCounter;
   for (int i = 0; i < replay.numItems; i++)
   {
