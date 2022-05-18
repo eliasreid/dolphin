@@ -1308,13 +1308,13 @@ void CEXIBrawlback::DMAWrite(u32 address, u32 size)
     // INFO_LOG(BRAWLBACK, "DMAWrite: CMD_START_MATCH");
     handleStartMatch(payload);
     break;
-  case CMD_REPLAY_GET_START_REPLAYS_STRUCT:
+  case CMD_REPLAY_START_REPLAYS_STRUCT:
     handleStartReplaysStruct(payload);
     break;
-  case CMD_REPLAY_GET_REPLAYS_STRUCT:
+  case CMD_REPLAY_REPLAYS_STRUCT:
     handleReplaysStruct(payload);
     break;
-  case CMD_REPLAYS_GET_REPLAYS_END:
+  case CMD_REPLAYS_REPLAYS_END:
     handleEndOfReplay();
     break;
 
