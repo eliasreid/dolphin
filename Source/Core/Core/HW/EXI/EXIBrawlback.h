@@ -75,7 +75,7 @@ private:
   int localPlayerIdx = -1;
   u8 numPlayers = 0;
   bool hasGameStarted = false;
-  std::unique_ptr<GameSettings> gameSettings;
+  GameSettings gameSettings;
   // -------------------------------
 
   // --- Time sync
