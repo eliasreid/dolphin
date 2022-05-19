@@ -1441,10 +1441,6 @@ void GetSettings()
       SConfig::GetInstance().m_EXIDevice[0] == ExpansionInterface::EXIDEVICE_MEMORYCARD;
   const bool slot_a_has_gci_folder =
       SConfig::GetInstance().m_EXIDevice[0] == ExpansionInterface::EXIDEVICE_MEMORYCARDFOLDER;
-  const bool slot_b_has_raw_memcard =
-      SConfig::GetInstance().m_EXIDevice[1] == ExpansionInterface::EXIDEVICE_MEMORYCARD;
-  const bool slot_b_has_gci_folder =
-      SConfig::GetInstance().m_EXIDevice[1] == ExpansionInterface::EXIDEVICE_MEMORYCARDFOLDER;
 
   s_bSaveConfig = true;
   s_bNetPlay = NetPlay::IsNetPlayRunning();
@@ -1465,12 +1461,9 @@ void GetSettings()
 
     s_bClearSave =
         !(slot_a_has_raw_memcard && File::Exists(Config::Get(Config::MAIN_MEMCARD_A_PATH))) &&
-        !(slot_b_has_raw_memcard && File::Exists(Config::Get(Config::MAIN_MEMCARD_B_PATH))) &&
-        !(slot_a_has_gci_folder && gci_folder_has_saves(0)) &&
-        !(slot_b_has_gci_folder && gci_folder_has_saves(1));
+        !(slot_a_has_gci_folder && gci_folder_has_saves(0));
   }
   s_memcards |= (slot_a_has_raw_memcard || slot_a_has_gci_folder) << 0;
-  s_memcards |= (slot_b_has_raw_memcard || slot_b_has_gci_folder) << 1;
 
   s_revision = ConvertGitRevisionToBytes(Common::scm_rev_git_str);
 

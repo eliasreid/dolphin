@@ -53,17 +53,25 @@
     <ClCompile Include="Core\HW\EXI\EXIBrawlback.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\InputsReplay.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\BrawlbackPad.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\exi-structures.h" />
     <ClInclude Include="Core\Brawlback\BrawlbackUtility.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\ExiStructures.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\FrameData.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\GameSettings.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\ItemIdName.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\ItemReplay.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\PlayerFrameData.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\PlayerReplay.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\PlayerSettings.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\PlayerType.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\PreserveBlock.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\Replay.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\StartReplay.h" />
     <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\RollbackInfo.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\PlayerPosition.h" />
+    <ClInclude Include="Core\Brawlback\include\brawlback-exi-structures\StartReplayPlayer.h" />
     <ClInclude Include="Core\Brawlback\include\json.hpp" />
     <ClInclude Include="Core\Brawlback\MemRegions.h" />
     <ClInclude Include="Core\Brawlback\Netplay\Matchmaking.h" />
