@@ -86,12 +86,12 @@ struct gfPadGamecube
 #pragma pack(push, 2)
 struct BrawlbackPad {
     unsigned short buttons;
-    char stickX;
-    char stickY;
-    char cStickX;
-    char cStickY;
-    char LTrigger;
-    char RTrigger;
+    s8 stickX;
+    s8 stickY;
+    s8 cStickX;
+    s8 cStickY;
+    s8 LTrigger;
+    s8 RTrigger;
 
     BrawlbackPad() {
         buttons = 0;

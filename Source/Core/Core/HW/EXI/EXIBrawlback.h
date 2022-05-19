@@ -90,8 +90,9 @@ private:
     
     // --- Rollback
     Match::RollbackInfo rollbackInfo = Match::RollbackInfo();
-    void SetupRollback(u32 currentFrame, u32 confirmFrame);
-    std::optional<Match::PlayerFrameData> HandleInputPrediction(u32 frame, u8 playerIdx);
+    void SetupRollback(u32 currentFrame, u8 remotePlayerIdx, Match::FrameData &framedataToSendToGame, std::pair<bool, bool>& foundData);
+    void ProcessRollback(s32 currentFrame, Match::FrameData &framedataToSendToGame, std::pair<bool, bool>& foundData);
+    std::optional<Match::PlayerFrameData> HandleInputPrediction(u8 playerIdx);
     int latestConfirmedFrame = 0;
     // -------------------------------
 

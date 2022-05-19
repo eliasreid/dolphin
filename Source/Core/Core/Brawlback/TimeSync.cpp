@@ -123,8 +123,8 @@ void TimeSync::ReceivedRemoteFramedata(s32 frame, u8 localPlayerIdx, bool hasGam
     s64 timeOffsetUs = opponentSendTimeUs - timing.timeUs + frameDiffOffsetUs;
 
     if (hasGameStarted) {
-        INFO_LOG(BRAWLBACK, "[Offset] Opp Frame: %d, My Frame: %d. Time offset: %f ms\n", 
-                                              frame, timing.frame, (double)timeOffsetUs / 1000.0);
+        //INFO_LOG(BRAWLBACK, "[Offset] Opp Frame: %d, My Frame: %d. Time offset: %f ms\n", 
+        //                                      frame, timing.frame, (double)timeOffsetUs / 1000.0);
     }
 
     // Add this offset to circular buffer for use later
@@ -179,7 +179,7 @@ void TimeSync::ProcessFrameAck(FrameAck* frameAck) {
     u64 rtt = this->pingUs[localPlayerIdx];
     double rtt_ms = (double)rtt / 1000.0;
 
-    INFO_LOG(BRAWLBACK, "Received ack for frame %u (w/o delay: %u)  [pIdx %u rtt %f ms]\n", frame, frame-FRAME_DELAY, (unsigned int)localPlayerIdx, rtt_ms);
+    //INFO_LOG(BRAWLBACK, "Received ack for frame %u (w/o delay: %u)  [pIdx %u rtt %f ms]\n", frame, frame-FRAME_DELAY, (unsigned int)localPlayerIdx, rtt_ms);
 
     if (frame % PING_DISPLAY_INTERVAL == 0) {
         std::stringstream dispStr;
