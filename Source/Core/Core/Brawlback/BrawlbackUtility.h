@@ -4,6 +4,7 @@
 #include <array>
 #include <fstream>
 #include <optional>
+#include <random>
 
 #include "Common/FileUtil.h"
 #include "Common/CommonTypes.h"
@@ -43,7 +44,7 @@ static_assert(FRAMEDATA_MAX_QUEUE_SIZE > MAX_ROLLBACK_FRAMES);
 #define TIMESYNC_MAX_US_OFFSET 10000 // 60% of a frame
 
 //#define SYNCLOG
-
+//#define RANDOM_INPUTS
 
 #define MS_IN_FRAME (1000 / 60)
 #define USEC_IN_FRAME (MS_IN_FRAME*1000)
@@ -120,8 +121,6 @@ namespace Brawlback {
     }
 
 
-
-
     // checks if the specified `button` is held down based on the buttonBits bitfield
     bool isButtonPressed(u16 buttonBits, PADButtonBits button);
     void ResetRollbackInfo(RollbackInfo& rollbackInfo);
@@ -143,8 +142,9 @@ namespace Brawlback {
         std::string str_byte(uint8_t byte);
         std::string str_half(u16 half);
         void SyncLog(const std::string& msg);
-        std::string stringifyFramedata(const PlayerFrameData& pfd);
         std::string stringifyFramedata(const FrameData& fd, int numPlayers);
+        std::string stringifyFramedata(const PlayerFrameData& pfd);
+        std::string stringifyPad(const BrawlbackPad& pad);
     }
     
     typedef std::deque<std::unique_ptr<PlayerFrameData>> PlayerFrameDataQueue;
@@ -153,6 +153,31 @@ namespace Brawlback {
                                                            u32 frame);
 
     int SavestateChecksum(std::vector<ssBackupLoc>* backupLocs);
+
+    inline bool isInputsEqual(const BrawlbackPad& p1, const BrawlbackPad& p2) {
+        bool buttons = p1.buttons == p2.buttons;
+        bool triggers = p1.LTrigger == p2.LTrigger && p1.RTrigger == p2.RTrigger;
+        bool analogSticks = p1.stickX == p2.stickX && p1.stickY == p2.stickY;
+        bool cSticks = p1.cStickX == p2.cStickX && p1.cStickY == p2.cStickY;
+        return buttons && triggers && analogSticks && cSticks;
+        //return memcmp(&p1, &p2, sizeof(BrawlbackPad)) == 0;
+    }
+
+    inline PlayerFrameData generateRandomInput(s32 frame, u8 pIdx) {
+        PlayerFrameData ret;
+        ret.frame = frame;
+        ret.playerIdx = pIdx;
+        std::default_random_engine generator = std::default_random_engine((s32)Common::Timer::GetTimeUs());
+        ret.pad.buttons = (u16)((generator() % 65535));
+        //ret.pad.stickX = (u8)(127-generator() % (127*2));
+        ret.pad.stickX = 0;
+        ret.pad.stickY = (u8)(127-generator() % (127*2));
+        ret.pad.cStickX = (u8)(127-generator() % (127*2));
+        ret.pad.cStickY = (u8)(127-generator() % (127*2));
+        ret.pad.LTrigger = (u8)(127-generator() % (127*2));
+        ret.pad.RTrigger = (u8)(127-generator() % (127*2));
+        return ret;
+    }
 
     template <typename T>
     T Clamp(T input, T Max, T Min) {

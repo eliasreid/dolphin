@@ -229,8 +229,7 @@ void LogManager::LogWithFullPath(LogLevel level, LogType type, const char* file,
                                  const char* message)
 {
   const std::string msg =
-      fmt::format("{} {}:{} {}[{}]: {}\n", Common::Timer::GetTimeFormatted(), file, line,
-                  LOG_LEVEL_TO_CHAR[static_cast<int>(level)], GetShortName(type), message);
+      fmt::format("{} [{}]: {}\n", Common::Timer::GetTimeFormatted(), GetShortName(type), message);
 
   for (const auto listener_id : m_listener_ids)
   {

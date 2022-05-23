@@ -84,8 +84,11 @@ private:
 
   // --- Rollback
   RollbackInfo rollbackInfo = RollbackInfo();
-  void SetupRollback(u32 currentFrame, u32 confirmFrame);
-  std::optional<PlayerFrameData> HandleInputPrediction(u32 frame, u8 playerIdx);
+  void SetupRollback(u32 currentFrame, u8 remotePlayerIdx, FrameData& framedataToSendToGame,
+                     std::pair<bool, bool>& foundData);
+  void ProcessRollback(s32 currentFrame, FrameData& framedataToSendToGame,
+                       std::pair<bool, bool>& foundData);
+  std::optional<PlayerFrameData> HandleInputPrediction(u8 playerIdx);
   int latestConfirmedFrame = 0;
   // -------------------------------
 
@@ -105,8 +108,8 @@ private:
   // local player input history. Always holds FRAMEDATA_MAX_QUEUE_SIZE of past inputs
   PlayerFrameDataQueue localPlayerFrameData = {};
 
-  // remote player input history (indexes are player indexes). Always holds FRAMEDATA_MAX_QUEUE_SIZE
-  // of past inputs
+
+  // remote player input history (indexes are player indexes). Always holds FRAMEDATA_MAX_QUEUE_SIZE of past inputs
   std::array<PlayerFrameDataQueue, MAX_NUM_PLAYERS> remotePlayerFrameData = {};
   // -------------------------------
 
