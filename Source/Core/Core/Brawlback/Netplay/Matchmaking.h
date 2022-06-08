@@ -76,6 +76,7 @@ public:
   std::string GetErrorMessage();
   int LocalPlayerIndex();
   std::vector<UserInfo> GetPlayerInfo();
+  UserInfo GetUserInfo() { return m_user; }
   std::string GetPlayerName(u8 port);
   std::vector<u16> GetStages();
   u16 GetRandomStage();

@@ -1336,6 +1336,74 @@ void CEXIBrawlback::handleStartMatch(u8* payload)
   std::memcpy(&gameSettings, payload, sizeof(GameSettings));
 }
 
+#include <curl/curl.h>
+
+void swapGameReportEndian(GameReport& report) {
+    for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
+        report.damage[i] = swap_endian(report.damage[i]);
+        report.stocks[i] = swap_endian(report.stocks[i]);
+    }
+    report.frame_duration = swap_endian(report.frame_duration);
+}
+
+void CEXIBrawlback::handleEndMatch(u8* payload) {
+    GameReport report;
+    memcpy(&report, payload, sizeof(GameReport));
+
+    swapGameReportEndian(report);
+	
+    auto userInfo = this->matchmaking->GetUserInfo();
+    INFO_LOG(BRAWLBACK, "Sending match end report\n");
+
+    json request;
+    request["uid"] = userInfo.uid;
+    request["playKey"] = userInfo.playKey;
+    request["gameIndex"] = gameIndex;
+    request["gameDurationFrames"] = report.frame_duration;
+
+    json players = json::array();
+    for (int i = 0; i < this->numPlayers; i++)
+    {
+        json p;
+        const Brawlback::UserInfo& playerInfo = this->matchmaking->GetPlayerInfo()[i];
+        p["uid"] = playerInfo.uid;
+        p["damageDone"] = report.damage[i];
+        p["stocksRemaining"] = report.stocks[i];
+
+        players[i] = p;
+    }
+
+    request["players"] = players;
+
+    auto requestString = request.dump();
+
+    static const std::string reportURL = "https://lylat.gg/reports";
+
+    CURL *curl = curl_easy_init(); // TODO: init this earlier
+    // Send report
+    curl_easy_setopt(curl, CURLOPT_POST, true);
+    curl_easy_setopt(curl, CURLOPT_URL, reportURL.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestString.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, requestString.length());
+    CURLcode res = curl_easy_perform(curl);
+
+    if (res != 0)
+    {
+        ERROR_LOG(BRAWLBACK, "[GameReport] Got error executing request. Err code: %d", res);
+    }
+    else {
+        INFO_LOG(BRAWLBACK, "Successfully send end match report to %s\n", reportURL.c_str());
+    }
+
+
+    if (curl)
+	{
+		curl_easy_cleanup(curl);
+	}
+
+    gameIndex++;
+}
+
 void CEXIBrawlback::handleStartReplaysStruct(u8* payload)
 {
   StartReplay startReplay;
@@ -1446,6 +1514,9 @@ void CEXIBrawlback::DMAWrite(u32 address, u32 size)
   case CMD_ONLINE_INPUTS:
     // INFO_LOG(BRAWLBACK, "DMAWrite: CMD_ONLINE_INPUTS");
     handleLocalPadData(payload);
+    break;
+  case CMD_MATCH_END:
+    handleEndMatch(payload);
     break;
   case CMD_CAPTURE_SAVESTATE:
     // INFO_LOG(BRAWLBACK, "DMAWrite: CMD_CAPTURE_SAVESTATE");

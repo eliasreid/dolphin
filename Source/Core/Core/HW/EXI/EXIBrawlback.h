@@ -33,6 +33,7 @@ private:
   void handleLocalPadData(u8* data);
   void handleFindMatch(u8* payload);
   void handleStartMatch(u8* payload);
+  void handleEndMatch(u8* payload);
   void handleStartReplaysStruct(u8* payload);
   void handleReplaysStruct(u8* payload);
   void handleEndOfReplay();
@@ -76,6 +77,7 @@ private:
   u8 numPlayers = 0;
   bool hasGameStarted = false;
   GameSettings gameSettings;
+  int gameIndex = 0;
   // -------------------------------
 
   // --- Time sync
