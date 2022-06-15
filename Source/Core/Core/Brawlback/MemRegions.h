@@ -22,12 +22,13 @@ static std::vector<ssBackupLoc> memRegions = {
         // mem2
         {0x90e61400, 0x90e77500, nullptr, "WiiPad"}, // WiiPad
 
-        {0x9151fa00, 0x917C9400, nullptr, "first half of Fighter1Resource"}, // first half of Fighter1Resource
+        {0x9151fa00, 0x91a72e00, nullptr, "Fighter1Resource"},
+        //{0x9151fa00, 0x917C9400, nullptr, "first half of Fighter1Resource"}, // first half of Fighter1Resource
         //{0x9151fa00, 0x9151fa00+0x154D00, nullptr, "fighter1resource 1/4"},
         //{0x9151fa00+0x154D00, 0x917C9400, nullptr, "fighter1resource 2/4"},
 
-
-        {0x91b04c80, 0x91DAE680, nullptr, "Fighter2Resource first half"}, // Fighter2Resource first half
+        {0x91b04c80, 0x92058080, nullptr, "Fighter2Resource"},
+        //{0x91b04c80, 0x91DAE680, nullptr, "Fighter2Resource first half"}, // Fighter2Resource first half
         //{0x91b04c80, 0x91b04c80+0x154D00, nullptr, "fighter2resource 1/4"},
         //{0x91b04c80+0x154D00, 0x91DAE680, nullptr, "fighter2resource 2/4"},
 
@@ -38,8 +39,8 @@ static std::vector<ssBackupLoc> memRegions = {
         //{0x92cb4400, 0x92cb4400+0x8CD80, nullptr, "FighterTechqniq 1/2"},
         //{0x92cb4400+0x8CD80, 0x92dcdf00, nullptr, "fightertechqniq 2/2"},
 
-
-        {0x9134cc00, 0x91478e00, nullptr, "CopyFB"}, // CopyFB
+        { 0x9134cc00, 0x9134cc10, nullptr, "CopyFB_Edited" },
+        //{0x9134cc00, 0x91478e00, nullptr, "CopyFB"}, // CopyFB
 
         //{0x9134cc00, 0x913E2D00, nullptr, "CopyFB 1/2"},
         //{0x913E2D00, 0x91478e00, nullptr, "CopyFB 2/2"},

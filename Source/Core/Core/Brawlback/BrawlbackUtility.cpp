@@ -7,7 +7,7 @@ namespace Brawlback
 {
     void ResetRollbackInfo(RollbackInfo& rollbackInfo)
     {
-      rollbackInfo.isUsingPredictedInputs = false;
+      rollbackInfo.isPredicting = false;
       rollbackInfo.beginFrame = 0;
       rollbackInfo.endFrame = 0;
       rollbackInfo.predictedInputs = FrameData();
