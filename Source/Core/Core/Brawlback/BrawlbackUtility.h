@@ -11,45 +11,12 @@
 #include "Common/Timer.h"
 #include "Common/Logging/Log.h"
 #include "Common/Logging/LogManager.h"
+
 #include "SlippiUtility.h"
 #include "Brawltypes.h"
 #include "Savestate.h"
 #include "brawlback-exi-structures/ExiStructures.h"
 
-
-#define FRAME_DELAY 2
-static_assert(FRAME_DELAY >= 1);
-static_assert(FRAME_DELAY + MAX_ROLLBACK_FRAMES >= 6); // minimum frames of "compensation"
-
-#define ROLLBACK_IMPL true
-
-// number of max FrameData's to keep in the (remote) queue
-#define FRAMEDATA_MAX_QUEUE_SIZE 15 
-static_assert(FRAMEDATA_MAX_QUEUE_SIZE > MAX_ROLLBACK_FRAMES);
-// update ping display every X frames
-#define PING_DISPLAY_INTERVAL 30
-
-// check clock desynchronization every X frames
-#define ONLINE_LOCKSTEP_INTERVAL 30
-
-#define GAME_START_FRAME 0
-//#define GAME_FULL_START_FRAME 1
-// before this frame we basically use delay-based netcode to ensure things are reasonably synced up before doing rollback stuff
-#define GAME_FULL_START_FRAME 100
-
-#define MAX_REMOTE_PLAYERS 3
-#define MAX_NUM_PLAYERS 4
-#define BRAWLBACK_PORT 7779
-
-#define TIMESYNC_MAX_US_OFFSET 10000 // 60% of a frame
-
-//#define SYNCLOG
-//#define RANDOM_INPUTS
-
-#define MS_IN_FRAME (1000 / 60)
-#define USEC_IN_FRAME (MS_IN_FRAME*1000)
-#define MS_TO_FRAMES(ms) (ms * 60 / 1000)
-#define FRAMES_TO_MS(frames) (1000 * frames / 60)
 
 // ---
 // mem dumping related
@@ -131,7 +98,6 @@ namespace Brawlback {
 
     // checks if the specified `button` is held down based on the buttonBits bitfield
     bool isButtonPressed(u16 buttonBits, PADButtonBits button);
-    void ResetRollbackInfo(RollbackInfo& rollbackInfo);
     namespace Mem {
         void print_byte(uint8_t byte);
         void print_half(u16 half);

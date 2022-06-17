@@ -87,24 +87,16 @@ private:
   // -------------------------------
 
   // --- Rollback
+  bool isPredicting; // if we are using past inputs for this frame or not
+  FrameData predictedInputs; // predicted inputs from some previous frame
   u32 framesToAdvance = 1; // number of "frames" to advance the simulation on this frame
   int latestConfirmedFrame = 0; // Tracks the last frame where we synchronized the game state with the remote client
 
-  RollbackInfo rollbackInfo = RollbackInfo();
-
-
   void updateSync(s32& localFrame, u8 playerIdx);
   bool shouldRollback(s32 localFrame);
-
-  void SetupRollback(u32 currentFrame, u8 remotePlayerIdx, FrameData& framedataToSendToGame,
-                     std::pair<bool, bool>& foundData);
-  void ProcessRollback(s32 currentFrame, FrameData& framedataToSendToGame,
-                       std::pair<bool, bool>& foundData);
   void LoadState(s32 rollbackFrame);
   void SaveState(s32 frame);
-  PlayerFrameData NewSetupRollback(s32 currentFrame, u8 remotePlayerIdx);
 
-  std::optional<PlayerFrameData> HandleInputPrediction(u8 playerIdx);
   // -------------------------------
 
   // --- Savestates
@@ -117,7 +109,6 @@ private:
 
   // --- Framedata (player inputs)
   void handleSendInputs(u32 frame);
-  std::pair<bool, bool> getInputsForGame(FrameData& framedataToSendToGame, u32 frame);
   PlayerFrameData getLocalInputs(const s32& frame);
   PlayerFrameData getRemoteInputs(s32& frame, u8 playerIdx);
   void storeLocalInputs(PlayerFrameData* localPlayerFramedata);

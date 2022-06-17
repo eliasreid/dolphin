@@ -201,8 +201,6 @@ void CEXIBrawlback::LoadState(s32 rollbackFrame)
 {
   // INFO_LOG(BRAWLBACK, "Attempting to load state for frame %i\n", frame);
 
-  // u32* preserveArr = (u32*)loadStateRollbackInfo->preserveBlocks.data();
-
   if (!activeSavestates.count(rollbackFrame))
   {
     // This savestate does not exist - just disconnect and throw hands :/
@@ -412,10 +410,10 @@ void CEXIBrawlback::updateSync(s32& localFrame, u8 playerIdx) {
     
     bool isSynchronized = true;
 
-    if (rollbackInfo.isPredicting && this->shouldRollback(localFrame) && latestConfirmedFrame) {
+    if (isPredicting && this->shouldRollback(localFrame) && latestConfirmedFrame) {
 
-        const PlayerFrameData predictedInputs = rollbackInfo.predictedInputs.playerFrameDatas[playerIdx];
-        INFO_LOG(BRAWLBACK, "Checking predicted inputs against remote inputs. predicted frame = %u\n", predictedInputs.frame);
+        const PlayerFrameData playerPredictedInputs = predictedInputs.playerFrameDatas[playerIdx];
+        INFO_LOG(BRAWLBACK, "Checking predicted inputs against remote inputs. predicted frame = %u\n", playerPredictedInputs.frame);
 
         for (int i = this->latestConfirmedFrame + 1; i <= finalFrame; i++) {
             const PlayerFrameData* remoteInputs = findInPlayerFrameDataQueue(this->remotePlayerFrameData[playerIdx], i);
@@ -423,7 +421,7 @@ void CEXIBrawlback::updateSync(s32& localFrame, u8 playerIdx) {
                 ERROR_LOG(BRAWLBACK, "Couldn't find remote inputs for frame %i in updateSync!\n", i);
             }
             else {
-                if (!isInputsEqual((*remoteInputs).pad, predictedInputs.pad)) {
+                if (!isInputsEqual((*remoteInputs).pad, playerPredictedInputs.pad)) {
                     // remote inputs don't match predicted
                     this->latestConfirmedFrame = i - 1;
                     isSynchronized = false;
@@ -478,22 +476,22 @@ PlayerFrameData CEXIBrawlback::getRemoteInputs(s32& localFrame, u8 playerIdx) {
         if (remoteFrameData) {
             finalRemoteInputs = *remoteFrameData;
             INFO_LOG(BRAWLBACK, "Found remote inputs frame = %u\n", finalRemoteInputs.frame);
-            rollbackInfo.isPredicting = false;
+            isPredicting = false;
         }
         else {
             INFO_LOG(BRAWLBACK, "No remote framedata!\n");
             // couldn't find remote inputs. Time to predict
             s32 predictedInputsFrame = this->latestConfirmedFrame;
-            PlayerFrameData* predictedInputs = findInPlayerFrameDataQueue(this->remotePlayerFrameData[playerIdx], predictedInputsFrame);
-            if (!predictedInputs) {
+            PlayerFrameData* previousInputs = findInPlayerFrameDataQueue(this->remotePlayerFrameData[playerIdx], predictedInputsFrame);
+            if (!previousInputs) {
                 ERROR_LOG(BRAWLBACK, "Failed to find predicted inputs for frame %i in getRemoteInputs!\n", predictedInputsFrame);
                 finalRemoteInputs = CreateBlankPlayerFrameData(localFrame, playerIdx);
             }
             else {
-                INFO_LOG(BRAWLBACK, "Found predicted inputs for frame = %u\n", predictedInputs->frame);
-                finalRemoteInputs = *predictedInputs;
-                rollbackInfo.predictedInputs.playerFrameDatas[playerIdx] = *predictedInputs;
-                rollbackInfo.isPredicting = true;
+                INFO_LOG(BRAWLBACK, "Found predicted inputs for frame = %u\n", previousInputs->frame);
+                finalRemoteInputs = *previousInputs;
+                predictedInputs.playerFrameDatas[playerIdx] = *previousInputs;
+                isPredicting = true;
             }
         }
 

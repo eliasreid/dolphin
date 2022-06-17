@@ -5,16 +5,6 @@
 
 namespace Brawlback
 {
-    void ResetRollbackInfo(RollbackInfo& rollbackInfo)
-    {
-      rollbackInfo.isPredicting = false;
-      rollbackInfo.beginFrame = 0;
-      rollbackInfo.endFrame = 0;
-      rollbackInfo.predictedInputs = FrameData();
-      rollbackInfo.shouldRollbackThisFrame = false;
-      memset(rollbackInfo.pastFrameDatas, 0, sizeof(FrameData) * MAX_ROLLBACK_FRAMES);
-      rollbackInfo.hasPreserveBlocks = false;
-    }
 
     bool isButtonPressed(u16 buttonBits, PADButtonBits button)
     {
