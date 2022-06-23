@@ -95,6 +95,32 @@ namespace Brawlback {
         bool isPlayerFrameDataEqual(const PlayerFrameData& p1, const PlayerFrameData& p2);
     }
 
+    template <class T>
+    inline T swap_endian(T in)
+    {
+        char* const p = reinterpret_cast<char*>(&in);
+        for (size_t i = 0; i < sizeof(T) / 2; ++i)
+            std::swap(p[i], p[sizeof(T) - i - 1]);
+        return in;
+    }
+
+    inline void SwapPlayerFrameDataEndianness(PlayerFrameData& pfd) {
+        pfd.frame = swap_endian(pfd.frame);
+        pfd.syncData.anim = swap_endian(pfd.syncData.anim);
+        pfd.syncData.locX = swap_endian(pfd.syncData.locX);
+        pfd.syncData.locY = swap_endian(pfd.syncData.locY);
+        pfd.syncData.percent = swap_endian(pfd.syncData.percent);
+        pfd.randomSeed = swap_endian(pfd.randomSeed);
+    }
+    inline void SwapFrameDataEndianness(FrameData& fd) {
+        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
+            SwapPlayerFrameDataEndianness(fd.playerFrameDatas[i]);
+        }
+    }
+
+    inline void PrintSyncData(const SyncData& data) {
+        INFO_LOG(BRAWLBACK, "xPos = %f  yPos = %f  facingDir = %i  anim = %u  percent = %f  stocks = %i\n", data.locX, data.locY, (s32)data.facingDir, data.anim, data.percent, (u32)data.stocks);
+    }
 
     // checks if the specified `button` is held down based on the buttonBits bitfield
     bool isButtonPressed(u16 buttonBits, PADButtonBits button);

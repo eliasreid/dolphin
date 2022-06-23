@@ -38,8 +38,8 @@ static std::vector<ssBackupLoc> memRegions = {
     {0x81601960, 0x81734d60, nullptr, "InfoInstance"}, // InfoInstance
     {0x815edf60, 0x817bad60, nullptr, "InfoExtraResource"}, // InfoExtraResource
     {0x80c23a60, 0x80da3a60, nullptr, "InfoResource"}, // InfoResource
-    {0x80da3a60, 0x80fd6260, nullptr, "CommonResource"}, // CommonResource
-    {0x81049e60, 0x81061060, nullptr, "Tmp"}, // Tmp
+    //{0x80da3a60, 0x80fd6260, nullptr, "CommonResource"}, // CommonResource
+    //{0x81049e60, 0x81061060, nullptr, "Tmp"}, // Tmp
     {0x8154e560, 0x81601960, nullptr, "Physics"}, // Physics
 
     //{0x814ce460, 0x8154e560, nullptr, "StageInstance"}, // StageInstance
@@ -57,13 +57,13 @@ static std::vector<ssBackupLoc> memRegions = {
 
     {0x90e61400, 0x90e77500, nullptr, "WiiPad"}, // WiiPad
 
-    {0x9151fa00, 0x91a72e00, nullptr, "Fighter1Resource"},
-    //{0x9151fa00, 0x917C9400, nullptr, "first half of Fighter1Resource"}, // first half of Fighter1Resource
-    {0x91a72e00, 0x91b04c80, nullptr, "Fighter1Resource2"}, // Fighter1Resource2
+    //{0x9151fa00, 0x91a72e00, nullptr, "Fighter1Resource"},
+    {0x9151fa00, 0x917C9400, nullptr, "first half of Fighter1Resource"}, // first half of Fighter1Resource
+    //{0x91a72e00, 0x91b04c80, nullptr, "Fighter1Resource2"}, // Fighter1Resource2
 
-    {0x91b04c80, 0x92058080, nullptr, "Fighter2Resource"},
-    //{0x91b04c80, 0x91DAE680, nullptr, "Fighter2Resource first half"}, // Fighter2Resource first half
-    {0x92058080, 0x920e9f00, nullptr, "Fighter2Resource2"}, // Fighter2Resource2
+    //{0x91b04c80, 0x92058080, nullptr, "Fighter2Resource"},
+    {0x91b04c80, 0x91DAE680, nullptr, "Fighter2Resource first half"}, // Fighter2Resource first half
+    //{0x92058080, 0x920e9f00, nullptr, "Fighter2Resource2"}, // Fighter2Resource2
 
     {0x91478e00, 0x914d2900, nullptr, "FighterEffect"}, // FighterEffect
 
@@ -76,8 +76,8 @@ static std::vector<ssBackupLoc> memRegions = {
 
     {0x90167400, 0x90199800, nullptr, "GameGlobal"}, // GameGlobal
 
-    { 0x90ff5120, 0x90ff5130, nullptr, "GlobalMode1" }, // two GlobalMode addrs that apparently change sometimes
-    { 0x90ff5150, 0x90ff51c0, nullptr, "GlobalMode2" },
+    //{ 0x90ff5120, 0x90ff5130, nullptr, "GlobalMode1" }, // two GlobalMode addrs that apparently change sometimes
+    //{ 0x90ff5150, 0x90ff51c0, nullptr, "GlobalMode2" },
 
 };
 
