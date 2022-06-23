@@ -2,7 +2,8 @@
 #include "TimeSync.h"
 #include "VideoCommon/OnScreenDisplay.h"
 
-// pretty much all of this time sync stuff was taken from slippi
+// NOTICE:
+// a lot of these time sync techniques/flow was taken from slippi
 // Huge thanks to them <3
 // if need be, this can be reworked so it doesn't resemble slippi so much
 namespace Brawlback {
@@ -24,12 +25,9 @@ bool TimeSync::shouldStallFrame(s32 currentFrame, s32 latestRemoteFrame, u8 numP
     dispStr << "| Frame diff: " << frameDiff << " |\n";
     //OSD::AddTypedMessage(OSD::MessageType::NetPlayBuffer, dispStr.str(), OSD::Duration::NORMAL, OSD::Color::CYAN);
 
-    // SLIPPI LOGIC
-    #if ROLLBACK_IMPL
-    if (frameDiff >= MAX_ROLLBACK_FRAMES) {
-    #else
-    if (frameDiff > FRAME_DELAY) { 
-    #endif
+    bool pastFrameDiffLimit = ROLLBACK_IMPL ? frameDiff >= MAX_ROLLBACK_FRAMES : frameDiff > FRAME_DELAY;
+
+    if (pastFrameDiffLimit) { 
         this->stallFrameCount += 1;
         if (this->stallFrameCount > 60 * 7) {
             ERROR_LOG(BRAWLBACK, "CONNECTION STALLED\n");
@@ -108,7 +106,6 @@ void TimeSync::ReceivedRemoteFramedata(s32 frame, u8 localPlayerIdx, bool hasGam
     // We can compare this to when we sent a pad for last frame to figure out how far/behind we
     // are with respect to the opponent
 
-    // SLIPPI LOGIC
     auto timing = this->lastFrameTimings[localPlayerIdx];
     if (!hasGameStarted)
     {
@@ -146,8 +143,6 @@ void TimeSync::ProcessFrameAck(FrameAck* frameAck) {
     std::lock_guard<std::mutex> lock(this->ackTimersMutex);
     u8 localPlayerIdx = frameAck->playerIdx; // local player idx
     int frame = frameAck->frame; // this is with frame delay
-
-    // SLIPPI LOGIC
 
     // if this current acked frame is more recent than the last acked frame, set it
     int lastAcked = this->lastFrameAcked[localPlayerIdx];
