@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 
 #include "SlippiUtility.h"
 
@@ -13,6 +14,7 @@ static std::vector<PreserveBlock> excludeSections = {
     {0x935D0000, 0x935E0000-0x935D0000}, // CPP Framework heap (subject to change...??)
     // might also need the initializer sections(?) where global statics are stored
     // cpp framework code sections
+    //does this change every time we compile a source change in -asm? NO these regions are static
     {0x817da5a4, 0x81FFFFFF-0x817da5a4},
     {0x8055A600, 0x80563100-0x8055A600},
     {0x805B5200, 0x805B61D0-0x805B5200},
@@ -24,7 +26,64 @@ static std::vector<PreserveBlock> excludeSections = {
     
 };
 
-static std::vector<ssBackupLoc> memRegions = {
+//not sure if this helps. string is probably fine actually
+//enum RegionID : size_t
+//{
+//  gfTaskScheduler,
+//  System,
+//  Effect,
+//
+//};
+
+typedef struct
+{
+  u32 startAddress;
+  u32 endAddress;
+  const char* regionName;
+} BackupRegion;
+
+constexpr std::array backupRegions = {
+
+    // ============================= mem1 =============================
+
+    BackupRegion{0x805b8a00, 0x805b8a00 + 0x17c, "gfTaskScheduler"},  // gfTaskScheduler
+    BackupRegion{0x80611f60, 0x80673460, "System"},                   // System
+    BackupRegion{0x80b8db60, 0x80c23a60, "Effect"},                   // Effect
+    BackupRegion{0x8123ab60, 0x8128cb60, "Fighter1Instance"},         // Fighter1Instance
+    BackupRegion{0x8128cb60, 0x812deb60, "Fighter2Instance"},         // Fighter2Instance
+    BackupRegion{0x81601960, 0x81734d60, "InfoInstance"},             // InfoInstance
+    BackupRegion{0x815edf60, 0x817bad60, "InfoExtraResource"},        // InfoExtraResource
+    BackupRegion{0x80c23a60, 0x80da3a60, "InfoResource"},             // InfoResource
+    BackupRegion{0x8154e560, 0x81601960, "Physics"},                  // Physics
+    BackupRegion{0x80A471A0, 0x80b8db60, "OverlayCommon 4/4"},        // OverlayCommon 4/4
+
+    // ============================= mem2 =============================
+
+    BackupRegion{0x90e61400, 0x90e77500, "WiiPad"},  // WiiPad
+    BackupRegion{0x9151fa00, 0x917C9400,
+                 "first half of Fighter1Resource"},  // first half of Fighter1Resource
+    BackupRegion{0x91b04c80, 0x91DAE680,
+                 "Fighter2Resource first half"},              // Fighter2Resource first half
+    BackupRegion{0x91478e00, 0x914d2900, "FighterEffect"},    // FighterEffect
+    BackupRegion{0x92cb4400, 0x92dcdf00, "FighterTechqniq"},  // FighterTechqniq
+    BackupRegion{0x9134cc00, 0x9134cc10, "CopyFB_Edited"},
+    BackupRegion{0x90167400, 0x90199800, "GameGlobal"}  // GameGlobal
+};
+
+//constexpr size_t regionSize
+
+constexpr size_t fullBackupBufferSize()
+{
+  size_t size = 0;
+  for (const auto& region : backupRegions)
+  {
+    size += region.endAddress - region.startAddress;
+  }
+
+  return size;
+}
+
+static std::vector<SlippiUtility::Savestate::ssBackupLoc> memRegions = {
     // {start address, end address, nullptr, "NameOfSection"},
 
     // ============================= mem1 =============================

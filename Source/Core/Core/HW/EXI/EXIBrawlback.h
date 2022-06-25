@@ -124,6 +124,8 @@ private:
   std::array<PlayerFrameDataQueue, MAX_NUM_PLAYERS> remotePlayerFrameData = {};
   // -------------------------------
 
+  std::vector<int> ssTimings;
+
 protected:
   void TransferByte(u8& byte) override;
 };

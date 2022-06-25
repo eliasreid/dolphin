@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SlippiUtility.h"
+#include "MemRegions.h"
 
 using namespace SlippiUtility::Savestate;
 
@@ -17,6 +18,7 @@ public:
 
 
     void Capture();
+    void CaptureFlat();
     void Load(std::vector<PreserveBlock> blocks);
 
     //static bool shouldForceInit;
@@ -27,13 +29,12 @@ public:
     int checksum = -1;
 private:
 
+    std::array<u8, MemRegions::fullBackupBufferSize()> backupBuffer;
 
     std::vector<ssBackupLoc> backupLocs = {};
     std::unordered_map<PreserveBlock, std::vector<u8>, preserve_hash_fn, preserve_eq_fn> preservationMap;
-    std::vector<u8> dolphinSsBackup = {};
 
     void getDolphinState(PointerWrap& p);
-
 
     void initBackupLocs();
 

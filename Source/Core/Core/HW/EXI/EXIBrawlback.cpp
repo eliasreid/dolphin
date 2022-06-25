@@ -117,7 +117,7 @@ void CEXIBrawlback::handleCaptureSavestate(u8* data)
 
 void CEXIBrawlback::SaveState(s32 frame)
 {
-  u64 startTime = Common::Timer::GetTimeUs();
+  
 
   if (frame % 30 == 0)
   {
@@ -136,6 +136,12 @@ void CEXIBrawlback::SaveState(s32 frame)
       availableSavestates.push_back(std::make_unique<BrawlbackSavestate>());
     }
     INFO_LOG(BRAWLBACK, "Initialized savestates!\n");
+  }
+
+  if (availableSavestates.empty() && activeSavestates.empty())
+  {
+    ERROR_LOG(BRAWLBACK, "Could not retrieve save state buffer for frame %i\n", frame);
+    return;
   }
 
   // Grab an available savestate
@@ -169,15 +175,62 @@ void CEXIBrawlback::SaveState(s32 frame)
     return;
   }
 
+
+  u64 startTime = Common::Timer::GetTimeUs();
+
   ss->Capture();
+
+  u32 timeDiff = (u32)(Common::Timer::GetTimeUs() - startTime);
+  //INFO_LOG(BRAWLBACK, "Captured savestate for frame %d in: %f ms", frame,
+  //         ((double)timeDiff) / 1000);
+
+  ssTimings.push_back(timeDiff);
+
+  startTime = Common::Timer::GetTimeUs();
+
+  //ss->CaptureFlat();
+
+  timeDiff = (u32)(Common::Timer::GetTimeUs() - startTime);
+  //ssTimings.push_back(timeDiff);
+  //INFO_LOG(BRAWLBACK, "Captured \"flat\" savestate for frame %d in: %f ms", frame,
+  //         ((double)timeDiff) / 1000);
+
+
+  if(frame == 3600){
+
+       
+
+    static int timings_num = 0;
+
+      std::string frame_folder = File::GetUserPath(D_DUMP_IDX) + "/timings_log" ;
+      if (!std::filesystem::exists(frame_folder))
+        std::filesystem::create_directories(frame_folder);
+
+      std::string file = frame_folder + "/timings" + std::to_string(timings_num)  + ".csv";
+
+      //build output string
+      std::string text;
+      for (int val : ssTimings)
+      {
+        text += std::to_string(val) + "\n";
+      }
+
+      File::WriteStringToFile(file, text);
+      ERROR_LOG(BRAWLBACK, "writing timings log to %s", file.c_str());
+
+      timings_num += 1;
+      ssTimings.clear();
+
+    }
+
+
+
   // ss->frame = frame;
   // ss->checksum = SavestateChecksum(ss->getBackupLocs()); // really expensive calculation
   // INFO_LOG(BRAWLBACK, "Savestate for frame %i checksum is %i\n", ss->frame, ss->checksum);
   activeSavestates[frame] = std::move(ss);
 
-  u32 timeDiff = (u32)(Common::Timer::GetTimeUs() - startTime);
-  INFO_LOG(BRAWLBACK, "Captured savestate for frame %d in: %f ms", frame,
-           ((double)timeDiff) / 1000);
+
 }
 
 void CEXIBrawlback::handleLoadSavestate(u8* data)

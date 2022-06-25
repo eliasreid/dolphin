@@ -402,7 +402,7 @@ void Matchmaking::startMatchmaking()
 	char lanAddr[30] = "";
 
 	char host[256];
-	char *IP;
+  char* IP = nullptr;
 	struct hostent *host_entry;
 	int hostname;
 	hostname = gethostname(host, sizeof(host)); // find the host name
@@ -428,6 +428,7 @@ void Matchmaking::startMatchmaking()
 				i++;
 			}
 
+      
 			sprintf(lanAddr, "%s:%d", IP, m_hostPort);
 		}
 	}

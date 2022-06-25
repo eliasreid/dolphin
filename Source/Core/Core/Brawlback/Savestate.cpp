@@ -9,7 +9,7 @@
 #include "VideoCommon/OnScreenDisplay.h"
 #include "common/Logging/Log.h"
 
-#include "MemRegions.h"
+
 
 #define LOW_BOUND_MEM 0x80000000
 
@@ -79,18 +79,38 @@ void BrawlbackSavestate::initBackupLocs()
   once = false;
 }
 
-typedef std::vector<SlippiUtility::Savestate::ssBackupLoc>::iterator backupLocIterator;
-
-void captureMemRegions(backupLocIterator start, backupLocIterator end) {
-    for (auto it = start; it != end; ++it) {
-        auto size = it->endAddress - it->startAddress;
-        Memory::CopyFromEmu(it->data, it->startAddress, size);  // game -> emu
-    }
-}
-
 void BrawlbackSavestate::Capture()
 {
-    captureMemRegions(backupLocs.begin(), backupLocs.end());
+  for (auto& region : backupLocs)
+  {
+    const auto size = region.endAddress - region.startAddress;
+    auto ptr = Memory::GetPointer(region.startAddress);
+    std::memcpy(region.data, ptr, size);
+    //Memory::CopyFromEmu(region.data, region.startAddress, size);
+  }
+}
+
+void BrawlbackSavestate::CaptureFlat()
+{
+  //save regions into backupBuffer
+  //std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  //push memory regions into full array
+
+  u32 currIndex = 0;
+
+  //Next could try unrolling this loop, so that we call memcpy with known size at compile time.
+
+  for (auto& region : MemRegions::backupRegions)
+  {
+    const u32 size = region.endAddress - region.startAddress;
+    auto ptr = Memory::GetPointer(region.startAddress);
+    //std::copy(ptr, ptr + size, backupBuffer.begin() + currIndex);
+    std::memcpy(&backupBuffer[currIndex], ptr, size);
+    //Memory::CopyFromEmu(&backupBuffer[currIndex], region.startAddress, size);
+    currIndex += size;
+  }
+  
 }
 
 void BrawlbackSavestate::Load(std::vector<PreserveBlock> blocks)
