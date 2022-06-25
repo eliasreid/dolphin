@@ -281,9 +281,6 @@ FrameData CreateBlankFrameData(u32 frame) {
     return fd;
 }
 
-static int numTimesyncs = 0;
-static int numRollbacks = 0;
-static int synclogFrameTracker = 0;
 
 // `data` is a ptr to a PlayerFrameData struct
 // this is called every frame at the beginning of the frame
@@ -314,6 +311,7 @@ void CEXIBrawlback::handleLocalPadData(u8* data)
 
     // this just for debugging purposes. Tracks and displays the number of timesyncs done every 60 frames (1 second)
     if (localFrame % 60 == 0) {
+        // TPS = Timesyncs Per Second    RPS = Rollbacks Per Second
         OSD::AddTypedMessage(OSD::MessageType::NetPlayBuffer, "TPS: " + std::to_string(numTimesyncs) + "  RPS: " + std::to_string(numRollbacks) + "\n", OSD::Duration::NORMAL, OSD::Color::CYAN);
         numTimesyncs = 0;
         numRollbacks = 0;
@@ -336,7 +334,7 @@ void CEXIBrawlback::handleLocalPadData(u8* data)
       this->handleSendInputs(localFrame);
       //this->SendCmdToGame(EXICommand::CMD_TIMESYNC);
       this->framesToAdvance = 0;
-      numTimesyncs += 1;
+      numTimesyncs++;
     }
     else
     {
@@ -441,6 +439,7 @@ void CEXIBrawlback::updateSync(s32& localFrame, u8 playerIdx) {
         INFO_LOG(BRAWLBACK, "Num frames to simulate = %u\n", framesToAdvance);
         // set the local frame to the frame we just rolled back to so we can fetch the correct inputs
         localFrame = this->latestConfirmedFrame;
+        numRollbacks++;
     }
 
     INFO_LOG(BRAWLBACK, "UpdateSync latestConfirmedFrame = %i\n", latestConfirmedFrame);
@@ -452,6 +451,7 @@ bool CEXIBrawlback::shouldRollback(s32 localFrame) {
 }
 
 PlayerFrameData CEXIBrawlback::getRemoteInputs(s32& localFrame, u8 playerIdx) {
+    std::lock_guard<std::mutex> lock(remotePadQueueMutex);
     PlayerFrameData finalRemoteInputs;
 
     bool isRollbackMode = ROLLBACK_IMPL && // delay-based/rollback toggle
@@ -494,6 +494,7 @@ PlayerFrameData CEXIBrawlback::getRemoteInputs(s32& localFrame, u8 playerIdx) {
         // no rollbacks, use delay-based
         if (!remoteFrameData) {
             this->framesToAdvance = 0;
+            numTimesyncs++;
             finalRemoteInputs = CreateBlankPlayerFrameData(localFrame, playerIdx);
             ERROR_LOG(BRAWLBACK, "Failed to find remote inputs in delay-based mode! Using blank framedata & stalling...\n");
         }

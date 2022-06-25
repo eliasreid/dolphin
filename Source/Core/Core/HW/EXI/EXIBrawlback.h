@@ -86,6 +86,9 @@ private:
   std::unique_ptr<TimeSync> timeSync;
   // -------------------------------
 
+  int numTimesyncs = 0;
+  int numRollbacks = 0;
+
   // --- Rollback
   bool isPredicting; // if we are using past inputs for this frame or not
   FrameData predictedInputs; // predicted inputs from some previous frame
