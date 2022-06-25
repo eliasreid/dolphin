@@ -35,12 +35,13 @@ static std::vector<PreserveBlock> excludeSections = {
 //
 //};
 
-typedef struct
+struct BackupRegion
 {
   u32 startAddress;
   u32 endAddress;
   const char* regionName;
-} BackupRegion;
+  constexpr u32 size() const { return endAddress - startAddress; }
+} ;
 
 constexpr std::array backupRegions = {
 
@@ -69,6 +70,20 @@ constexpr std::array backupRegions = {
     BackupRegion{0x9134cc00, 0x9134cc10, "CopyFB_Edited"},
     BackupRegion{0x90167400, 0x90199800, "GameGlobal"}  // GameGlobal
 };
+
+constexpr auto sortArr(const auto& arr)
+{
+  auto result = arr;
+  std::sort(result.begin(), result.end(),
+            [](const BackupRegion& first, const BackupRegion& second) {
+              return first.startAddress < second.startAddress;
+            });
+  return result;
+}
+
+constexpr auto backupRegionsSorted = sortArr(backupRegions);
+
+//where in full buffer
 
 //constexpr size_t regionSize
 

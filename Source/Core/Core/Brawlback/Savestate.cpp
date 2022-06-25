@@ -59,6 +59,12 @@ void BrawlbackSavestate::getDolphinState(PointerWrap& p)
 
 void BrawlbackSavestate::initBackupLocs()
 {
+
+  //regionsCopy = MemRegions::backupRegions;
+  //std::sort(regionsCopy.begin(), regionsCopy.end(), [](MemRegions::BackupRegion& first, MemRegions::BackupRegion& second) {
+  //            return first.startAddress < second.startAddress;
+  //  });
+
     SlippiInitBackupLocations(this->backupLocs, MemRegions::memRegions, MemRegions::excludeSections);
 
     // measure total savestate size & display it
@@ -81,37 +87,42 @@ void BrawlbackSavestate::initBackupLocs()
 
 void BrawlbackSavestate::Capture()
 {
-  for (auto& region : backupLocs)
+  //for (auto& region : backupLocs)
+  //{
+  //  const auto size = region.endAddress - region.startAddress;
+  //  auto ptr = Memory::GetPointer(region.startAddress);
+  //  std::memcpy(region.data, ptr, size);
+  //  // Memory::CopyFromEmu(region.data, region.startAddress, size);
+  //}
+
+  for (size_t i = 0; i < backupLocs.size(); i++)
   {
-    const auto size = region.endAddress - region.startAddress;
-    auto ptr = Memory::GetPointer(region.startAddress);
-    std::memcpy(region.data, ptr, size);
-    //Memory::CopyFromEmu(region.data, region.startAddress, size);
+    mainThreadIndex = i;
+    if (mainThreadIndex < helpThreadIndex)
+    {
+      CaptureRegion(mainThreadIndex);
+    }
+    else
+    {
+      break;
+    }
   }
-}
 
-void BrawlbackSavestate::CaptureFlat()
-{
-  //save regions into backupBuffer
-  //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  //push memory regions into full array
-
-  u32 currIndex = 0;
-
-  //Next could try unrolling this loop, so that we call memcpy with known size at compile time.
-
-  for (auto& region : MemRegions::backupRegions)
-  {
-    const u32 size = region.endAddress - region.startAddress;
-    auto ptr = Memory::GetPointer(region.startAddress);
-    //std::copy(ptr, ptr + size, backupBuffer.begin() + currIndex);
-    std::memcpy(&backupBuffer[currIndex], ptr, size);
-    //Memory::CopyFromEmu(&backupBuffer[currIndex], region.startAddress, size);
-    currIndex += size;
-  }
+  // either main thread looped through all, or main thread met helper thread
   
+
 }
+
+
+
+void BrawlbackSavestate::CaptureRegion( size_t index)
+{
+  auto& region = backupLocs[index];
+  const auto size = region.endAddress - region.startAddress;
+  auto ptr = Memory::GetPointer(region.startAddress);
+  std::memcpy(region.data, ptr, size);
+}
+
 
 void BrawlbackSavestate::Load(std::vector<PreserveBlock> blocks)
 {

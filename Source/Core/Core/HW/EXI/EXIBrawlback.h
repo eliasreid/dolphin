@@ -124,6 +124,10 @@ private:
   std::array<PlayerFrameDataQueue, MAX_NUM_PLAYERS> remotePlayerFrameData = {};
   // -------------------------------
 
+  std::thread saveStateHelperThread;
+  std::atomic_bool saveStateThreadQuit = false;
+  std::atomic<BrawlbackSavestate*> currentSaveState = nullptr;
+
   std::vector<int> ssTimings;
 
 protected:

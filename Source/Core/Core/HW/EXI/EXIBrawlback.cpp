@@ -93,6 +93,13 @@ Brawlback::UserInfo CEXIBrawlback::getUserInfo()
 
 CEXIBrawlback::~CEXIBrawlback()
 {
+
+  this->saveStateThreadQuit = false;
+  if (this->saveStateHelperThread.joinable())
+  {
+    this->saveStateHelperThread.join();
+  }
+
   enet_deinitialize();
   enet_host_destroy(this->server);
   this->isConnected = false;
@@ -129,6 +136,27 @@ void CEXIBrawlback::SaveState(s32 frame)
   // tmp
   if (frame == GAME_START_FRAME && availableSavestates.empty())
   {
+    saveStateHelperThread = std::thread([this]() {
+      // do the things
+      while (!saveStateThreadQuit)
+      {
+        if (currentSaveState)
+        {
+          // do processing
+          auto* state = currentSaveState.load();
+          state->helpThreadIndex = state->getBackupLocs()->size() - 1;
+          while (state->mainThreadIndex < state->helpThreadIndex)
+          {
+            state->CaptureRegion(state->helpThreadIndex);
+            state->helpThreadIndex--;
+          }
+          state->helpThreadIndex = state->getBackupLocs()->size() - 1;
+        }
+      }
+    });
+    
+
+    ssTimings.clear();
     activeSavestates.clear();
     availableSavestates.clear();
     for (int i = 0; i <= MAX_ROLLBACK_FRAMES; i++)
@@ -178,17 +206,23 @@ void CEXIBrawlback::SaveState(s32 frame)
 
   u64 startTime = Common::Timer::GetTimeUs();
 
+  currentSaveState.store(ss.get());
   ss->Capture();
 
   u32 timeDiff = (u32)(Common::Timer::GetTimeUs() - startTime);
-  //INFO_LOG(BRAWLBACK, "Captured savestate for frame %d in: %f ms", frame,
-  //         ((double)timeDiff) / 1000);
+  INFO_LOG(BRAWLBACK, "Captured savestate for frame %d in: %f ms. main thread index %d", frame,
+           ((double)timeDiff) / 1000, ss->mainThreadIndex.load());
+
 
   ssTimings.push_back(timeDiff);
 
   startTime = Common::Timer::GetTimeUs();
 
-  //ss->CaptureFlat();
+  //notifies thread to start processing from end to start
+  ss->mainThreadIndex = 0;
+  
+
+  //ss->Capture();
 
   timeDiff = (u32)(Common::Timer::GetTimeUs() - startTime);
   //ssTimings.push_back(timeDiff);
@@ -196,32 +230,30 @@ void CEXIBrawlback::SaveState(s32 frame)
   //         ((double)timeDiff) / 1000);
 
 
-  if(frame == 3600){
-
-       
-
+  //if (false)
+    if (frame == 3600)
+  {
     static int timings_num = 0;
 
-      std::string frame_folder = File::GetUserPath(D_DUMP_IDX) + "/timings_log" ;
-      if (!std::filesystem::exists(frame_folder))
-        std::filesystem::create_directories(frame_folder);
+    std::string frame_folder = File::GetUserPath(D_DUMP_IDX) + "/timings_log";
+    if (!std::filesystem::exists(frame_folder))
+      std::filesystem::create_directories(frame_folder);
 
-      std::string file = frame_folder + "/timings" + std::to_string(timings_num)  + ".csv";
+    std::string file = frame_folder + "/timings" + std::to_string(timings_num) + ".csv";
 
-      //build output string
-      std::string text;
-      for (int val : ssTimings)
-      {
-        text += std::to_string(val) + "\n";
-      }
-
-      File::WriteStringToFile(file, text);
-      ERROR_LOG(BRAWLBACK, "writing timings log to %s", file.c_str());
-
-      timings_num += 1;
-      ssTimings.clear();
-
+    // build output string
+    std::string text;
+    for (int val : ssTimings)
+    {
+      text += std::to_string(val) + "\n";
     }
+
+    File::WriteStringToFile(file, text);
+    ERROR_LOG(BRAWLBACK, "writing timings log to %s", file.c_str());
+
+    timings_num += 1;
+    ssTimings.clear();
+  }
 
 
 
