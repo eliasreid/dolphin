@@ -52,7 +52,6 @@ namespace Brawlback {
 
       CMD_ONLINE_INPUTS = 1, // sending inputs from game to emulator
       CMD_CAPTURE_SAVESTATE = 2,
-      CMD_LOAD_SAVESTATE = 3,
 
       CMD_FIND_OPPONENT = 5,
       CMD_START_MATCH = 13,

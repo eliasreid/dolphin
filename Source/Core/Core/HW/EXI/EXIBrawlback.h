@@ -29,7 +29,6 @@ private:
 
   // --- DMA handlers
   void handleCaptureSavestate(u8* data);
-  void handleLoadSavestate(u8* data);
   void handleLocalPadData(u8* data);
   void handleFrameDataRequest(u8* data);
   void handleFrameAdvanceRequest(u8* data);

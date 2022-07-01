@@ -180,15 +180,6 @@ void CEXIBrawlback::SaveState(s32 frame)
            ((double)timeDiff) / 1000);
 }
 
-void CEXIBrawlback::handleLoadSavestate(u8* data)
-{
-  // frame we should rollback to
-  s32 rollbackFrame = *(s32*)data;
-  rollbackFrame = (s32)SlippiUtility::Mem::readWord((u8*)&rollbackFrame); // swap endianness
-
-  LoadState(rollbackFrame);
-}
-
 void CEXIBrawlback::LoadState(s32 rollbackFrame)
 {
   // INFO_LOG(BRAWLBACK, "Attempting to load state for frame %i\n", frame);
@@ -1260,10 +1251,6 @@ void CEXIBrawlback::DMAWrite(u32 address, u32 size)
   case CMD_CAPTURE_SAVESTATE:
     // INFO_LOG(BRAWLBACK, "DMAWrite: CMD_CAPTURE_SAVESTATE");
     handleCaptureSavestate(payload);
-    break;
-  case CMD_LOAD_SAVESTATE:
-    // INFO_LOG(BRAWLBACK, "DMAWrite: CMD_LOAD_SAVESTATE");
-    handleLoadSavestate(payload);
     break;
   case CMD_FIND_OPPONENT:
     // INFO_LOG(BRAWLBACK, "DMAWrite: CMD_FIND_OPPONENT");
