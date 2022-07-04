@@ -27,6 +27,8 @@
 
 namespace Brawlback {
 
+  bool syncDataEqual(const SyncData& first, const SyncData& second);
+
     struct UserInfo
     {
       std::string uid = "";

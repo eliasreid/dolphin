@@ -6,6 +6,17 @@
 namespace Brawlback
 {
 
+  bool syncDataEqual(const SyncData& first, const SyncData& second)
+  {
+    return first.anim == second.anim &&
+           first.facingDir == second.facingDir &&
+           first.locX == second.locX &&
+           first.locY == second.locY &&
+           first.percent == second.percent &&
+           first.stocks == second.stocks;
+
+  }
+
     bool isButtonPressed(u16 buttonBits, PADButtonBits button)
     {
         return (buttonBits & (PADButtonBits::Z << 8)) != 0;

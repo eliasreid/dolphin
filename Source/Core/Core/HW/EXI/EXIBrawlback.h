@@ -94,6 +94,8 @@ private:
   u32 framesToAdvance = 1; // number of "frames" to advance the simulation on this frame
   int latestConfirmedFrame = 0; // Tracks the last frame where we synchronized the game state with the remote client
 
+  std::optional<u32> resimConfirmedFrame;
+
   void updateSync(s32& localFrame, u8 playerIdx);
   bool shouldRollback(s32 localFrame);
   void LoadState(s32 rollbackFrame);

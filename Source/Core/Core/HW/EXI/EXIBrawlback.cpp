@@ -316,6 +316,45 @@ void CEXIBrawlback::handleLocalPadData(u8* data)
               std::to_string((double)timeSync->calcTimeOffsetUs(this->numPlayers) / 1000) +
               " ms\n"); 
     
+
+    if (resimConfirmedFrame && localFrame == *resimConfirmedFrame)
+    {
+      //We've resimed to the latest confirmed frame after a rollback
+      resimConfirmedFrame.reset();
+      //compare sync data
+
+      for (size_t i = 0; i < this->numPlayers; i++)
+      {
+        if (i == localPlayerIdx)
+        {
+          auto* dataBeforeRollback = findInPlayerFrameDataQueue(localPlayerFrameData, localFrame);
+          if (!syncDataEqual(localPlayerFramedata.syncData, dataBeforeRollback->syncData))
+          {
+            ERROR_LOG(BRAWLBACK, "sync data does not match after resimulation.\n");
+          }
+          else
+          {
+            ERROR_LOG(BRAWLBACK, "sync data DOES match after resimulation - rollback success\n");
+          }
+        }
+        // remotePlayerFrameData[]
+        // syncDataEqual( localPlayerFramedata.syncData,
+      }
+      
+
+      //get remote frame data for this frame
+      // 
+      // compare localPlayerFramedata syndata to c frame data
+
+      //localPlayerFramedata is what we JUST received from the emulator
+      // data in localPlayerFramedata should be stale from before we rolled back
+
+
+
+
+
+    }
+
     int remote_frame = (int)this->GetLatestRemoteFrame();
     bool shouldTimeSync = this->timeSync->shouldStallFrame(localFrame, remote_frame, this->numPlayers);
     if (shouldTimeSync)
@@ -376,7 +415,7 @@ PlayerFrameData CEXIBrawlback::getLocalInputs(const s32& frame) {
     if (!localFrameData || this->localPlayerFrameData.empty()) {
         // this shouldn't happen
         ERROR_LOG(BRAWLBACK, "Couldn't find local inputs! Using empty pad.\n");
-        WARN_LOG(BRAWLBACK, "Local pad input range: [%u - %u]\n", this->localPlayerFrameData.front()->frame, this->localPlayerFrameData.back()->frame);
+        //WARN_LOG(BRAWLBACK, "Local pad input range: [%u - %u]\n", this->localPlayerFrameData.front()->frame, this->localPlayerFrameData.back()->frame);
         return CreateBlankPlayerFrameData(frame, this->localPlayerIdx);
     }
     INFO_LOG(BRAWLBACK, "Got local inputs frame = %u\n", localFrameData->frame);
@@ -424,6 +463,7 @@ void CEXIBrawlback::updateSync(s32& localFrame, u8 playerIdx) {
     else {
         // not synchronized, rollback & resim
         INFO_LOG(BRAWLBACK, "Should rollback! frame = %i latestConfirmedFrame = %i\n", localFrame, latestConfirmedFrame);
+        resimConfirmedFrame = latestConfirmedFrame;
         LoadState(this->latestConfirmedFrame);
         // if on frame 10 we rollback to frame 7 we need to simulate frames 7,8,9, and 10 to get to where we were before. 10 - 7 + 1 = 4
         this->framesToAdvance = localFrame - this->latestConfirmedFrame + 1;
