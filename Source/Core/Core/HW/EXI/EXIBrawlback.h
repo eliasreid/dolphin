@@ -38,6 +38,7 @@ private:
   void handleStartReplaysStruct(u8* payload);
   void handleReplaysStruct(u8* payload);
   void handleEndOfReplay();
+  void handleVerifySync(u8* payload);
 
   template <typename T>
   void SendCmdToGame(EXICommand cmd, T* payload);
@@ -94,7 +95,9 @@ private:
   u32 framesToAdvance = 1; // number of "frames" to advance the simulation on this frame
   int latestConfirmedFrame = 0; // Tracks the last frame where we synchronized the game state with the remote client
 
-  std::optional<u32> resimConfirmedFrame;
+  std::optional<u32> verifySyncFrame;
+  SyncData trueSyncData;
+  s32 currentSimFrame = 0;
 
   void updateSync(s32& localFrame, u8 playerIdx);
   bool shouldRollback(s32 localFrame);

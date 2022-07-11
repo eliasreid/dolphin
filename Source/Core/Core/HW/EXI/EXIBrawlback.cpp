@@ -112,6 +112,11 @@ void CEXIBrawlback::handleCaptureSavestate(u8* data)
 {
   // current frame we are saving (and swap endianness)
   s32 frame = (s32)SlippiUtility::Mem::readWord(data);
+
+  //cache current sim frame so we know the frame when sync data comes in for
+  //CMD_VERIFY_SYNC
+  currentSimFrame = frame;
+
   SaveState(frame);
 }
 
@@ -446,6 +451,9 @@ void CEXIBrawlback::updateSync(s32& localFrame, u8 playerIdx) {
                     this->latestConfirmedFrame = i - 1;
                     isSynchronized = false;
                     INFO_LOG(BRAWLBACK, "Remote didn't match predicted inputs frame = %i\n", i);
+
+                    trueSyncData = (*remoteInputs).syncData;
+
                     break;
                 }
             }
@@ -463,7 +471,7 @@ void CEXIBrawlback::updateSync(s32& localFrame, u8 playerIdx) {
     else {
         // not synchronized, rollback & resim
         INFO_LOG(BRAWLBACK, "Should rollback! frame = %i latestConfirmedFrame = %i\n", localFrame, latestConfirmedFrame);
-        resimConfirmedFrame = latestConfirmedFrame;
+        verifySyncFrame = latestConfirmedFrame + 1;
         LoadState(this->latestConfirmedFrame);
         // if on frame 10 we rollback to frame 7 we need to simulate frames 7,8,9, and 10 to get to where we were before. 10 - 7 + 1 = 4
         this->framesToAdvance = localFrame - this->latestConfirmedFrame + 1;
@@ -1249,6 +1257,45 @@ void CEXIBrawlback::handleEndOfReplay()
               ubjson.size());
 }
 
+void CEXIBrawlback::handleVerifySync(u8* payload)
+{
+  //ERROR_LOG(BRAWLBACK, "handleVerifySync.\n");
+  SyncData remotePlayerSyncData;
+  std::memcpy(&remotePlayerSyncData, payload, sizeof(SyncData));
+  SwapSyncDataEndianness(remotePlayerSyncData);
+
+  //frame was set by previous save state command that is always run before this
+  // (perhaps these should be the same command)
+  if (verifySyncFrame)
+  {
+
+    ERROR_LOG(BRAWLBACK, "verifySyncFrame is %i, current sim frame (prev savestate frame) is %i.\n", *verifySyncFrame, currentSimFrame);
+
+    //a resimulation is happening - see if we've reached the frame we were resiming to
+    if (s32(*verifySyncFrame) == currentSimFrame)
+    {
+      //Compare sync data
+      const bool goodResim = syncDataEqual(remotePlayerSyncData, trueSyncData);
+      if (goodResim)
+      {
+        ERROR_LOG(BRAWLBACK, "resimulation resulted in same sync data.\n");
+      }
+      else
+      {
+        ERROR_LOG(BRAWLBACK, "resimulation resulted in different sync data from remote.\n");
+        auto remoteSyncStr = SyncDataToString(trueSyncData);
+        auto localSyncStr = SyncDataToString(remotePlayerSyncData);
+        ERROR_LOG(BRAWLBACK, "remote: %s\n", remoteSyncStr.c_str());
+        ERROR_LOG(BRAWLBACK, "local: %s\n", localSyncStr.c_str());
+      }
+
+      verifySyncFrame.reset();
+    }
+  }
+
+}
+
+
 // recieve data from game into emulator
 void CEXIBrawlback::DMAWrite(u32 address, u32 size)
 {
@@ -1308,6 +1355,9 @@ void CEXIBrawlback::DMAWrite(u32 address, u32 size)
     break;
   case CMD_REPLAYS_REPLAYS_END:
     handleEndOfReplay();
+    break;
+  case CMD_VERIFY_SYNC:
+    handleVerifySync(payload);
     break;
 
   // just using these CMD's to track frame times lol

@@ -68,6 +68,9 @@ namespace Brawlback {
       CMD_REPLAY_REPLAYS_STRUCT = 20,
       CMD_REPLAYS_REPLAYS_END = 21,
 
+      //game sends remote player sync data to emulator
+      CMD_VERIFY_SYNC = 22,
+
       CMD_MATCH_END = 4,
       CMD_SET_MATCH_SELECTIONS = 6,
 
@@ -105,22 +108,31 @@ namespace Brawlback {
         return in;
     }
 
+    inline void SwapSyncDataEndianness(SyncData& syncData)
+    {
+      syncData.anim = swap_endian(syncData.anim);
+      syncData.locX = swap_endian(syncData.locX);
+      syncData.locY = swap_endian(syncData.locY);
+      syncData.percent = swap_endian(syncData.percent);
+    }
+
     inline void SwapPlayerFrameDataEndianness(PlayerFrameData& pfd) {
         pfd.frame = swap_endian(pfd.frame);
-        pfd.syncData.anim = swap_endian(pfd.syncData.anim);
-        pfd.syncData.locX = swap_endian(pfd.syncData.locX);
-        pfd.syncData.locY = swap_endian(pfd.syncData.locY);
-        pfd.syncData.percent = swap_endian(pfd.syncData.percent);
+        SwapSyncDataEndianness(pfd.syncData);
         pfd.randomSeed = swap_endian(pfd.randomSeed);
     }
+
     inline void SwapFrameDataEndianness(FrameData& fd) {
         for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
             SwapPlayerFrameDataEndianness(fd.playerFrameDatas[i]);
         }
     }
 
-    inline void PrintSyncData(const SyncData& data) {
-        INFO_LOG(BRAWLBACK, "xPos = %f  yPos = %f  facingDir = %i  anim = %u  percent = %f  stocks = %i\n", data.locX, data.locY, (s32)data.facingDir, data.anim, data.percent, (u32)data.stocks);
+    inline std::string SyncDataToString(const SyncData& data) {
+      return fmt::format("xPos = {}  yPos = {}  facingDir = {}  anim = {}  percent = {}  stocks = {}",
+                  data.locX, data.locY, (s32)data.facingDir, data.anim, data.percent,
+                  (u32)data.stocks);
+        //ERROR_LOG(BRAWLBACK, "xPos = %f  yPos = %f  facingDir = %i  anim = %u  percent = %f  stocks = %i\n", data.locX, data.locY, (s32)data.facingDir, data.anim, data.percent, (u32)data.stocks);
     }
 
     // checks if the specified `button` is held down based on the buttonBits bitfield
